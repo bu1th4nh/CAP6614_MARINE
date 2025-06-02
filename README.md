@@ -24,7 +24,7 @@
 
 <p align="center">
   <strong>📌 [ICML 2025 Spotlight]</strong> • 
-  <a href="https://arxiv.org/abs/2402.08680">📄 ArXiv: 2402.08680</a>
+  <a href="https://arxiv.org/abs/2402.08680">📄 ArXiv</a>
 </p>
 
 
@@ -48,9 +48,6 @@ We introduce MARINE, a general framework for mitigating object hallucinations in
 
 
 ---
-<a name="-installation"></a>
-
-
 ## Installation
 
 ### 1. Install MARINE
@@ -77,24 +74,27 @@ pip install -r requirements.txt
 
 ### 3. Install External Libraries and Datasets
 
-#### External LVLMs
-
 MARINE interfaces with multiple open-source Large Vision-Language Models (LVLMs).
 Please **follow their setup instructions manually** before running MARINE:
 
-Visual Grounding Models:
+#### Visual Grounding Models:
+* [DETR](https://huggingface.co/docs/transformers/en/model_doc/detr)
 * [RAM++](https://github.com/xinyu1205/recognize-anything)
-```bash
-pip install git+https://github.com/xinyu1205/recognize-anything.git
-```
+  ```bash
+  pip install git+https://github.com/xinyu1205/recognize-anything.git
+  ```
 
-LVLMs:
-* (Example) 
-  * [LLaVA](https://github.com/haotian-liu/LLaVA)
-* (Optional) 
-  * [mPLUG-Owl2](https://github.com/X-PLUG/mPLUG-Owl)
-  * [InstructBLIP](https://github.com/salesforce/LAVIS/tree/main/projects/instructblip)
-  * [MiniGPT-4](https://github.com/Vision-CAIR/MiniGPT-4)
+
+#### LVLM Backbones
+
+* **Example used in our scripts:**
+  [LLaVA v1.5](https://github.com/haotian-liu/LLaVA)
+
+* **Others (optional):**
+  [mPLUG-Owl2](https://github.com/X-PLUG/mPLUG-Owl),
+  [InstructBLIP](https://github.com/salesforce/LAVIS/tree/main/projects/instructblip),
+  [MiniGPT-4](https://github.com/Vision-CAIR/MiniGPT-4)
+
 
 
 
@@ -136,7 +136,7 @@ output_ids = model.generate(
     input_ids=input_ids,
     pixel_values=images,
     do_sample=False,
-    max_new_tokens=64,
+    max_new_tokens=max_new_tokens,
     use_cache=True,
     logits_processor=LogitsProcessorList([
         GuidanceLogits(
@@ -172,15 +172,28 @@ bash scripts/prepare_marine_input.sh
 
 ### Step 2: Run LVLM Generation + Evaluation
 
-We provide example scripts for LLaVA v1.5:
+We recommend using [LLaVA v1.5](https://github.com/haotian-liu/LLaVA) as the LVLM backbone. To enable MARINE to import LLaVA modules directly, clone the repository and add it to your `PYTHONPATH` (either in `scripts/eval_llava2.sh` or your shell environment):
+
+```bash
+git clone https://github.com/haotian-liu/LLaVA.git ~/llava2
+export PYTHONPATH=$PYTHONPATH:~/llava2
+```
+
+Once set up, you can run the full evaluation pipeline:
 
 ```bash
 bash scripts/eval_llava2.sh
 ```
 
-This script generates answers and evaluates them using the CHAIR and POPE metrics.
+This script handles both generation and evaluation using the CHAIR and POPE metrics.
 
-#### Generation (LLaVA v1.5)
+---
+
+#### 🔍 What `eval_llava2.sh` Does
+
+Below are the key steps run inside the script:
+
+##### Generation (LLaVA v1.5)
 
 ```bash
 python ./marine/generate_llava2.py \
@@ -196,24 +209,31 @@ python ./marine/generate_llava2.py \
     --max_new_tokens 64
 ```
 
-#### Evaluation (CHAIR)
+##### Evaluation (CHAIR)
 
 ```bash
 python ./eval/eval_chair.py \
-    --eval_dir $OUTPUT_DIR
-    --save_path $OUTPUT_DIR/eval \
+    --eval_dir $OUTPUT_DIR \
+    --save_path $OUTPUT_DIR/eval
 ```
 
-#### Evaluation (POPE)
+##### Evaluation (POPE)
 
 ```bash
 python ./eval/eval_pope.py \
     --eval_dir $OUTPUT_DIR \
     --save_dir $OUTPUT_DIR/eval \
-    --label_file $QUESTION_FILE \
-            
+    --label_file $QUESTION_FILE
 ```
 
+##### Output Location
+
+The generated answers and evaluation results will be saved to:
+
+```bash
+./output/llava2/answers
+```
+This directory will contain both raw predictions and evaluation logs for CHAIR and POPE.
 
 ---
 

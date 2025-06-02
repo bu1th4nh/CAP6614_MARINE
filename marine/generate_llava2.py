@@ -5,7 +5,7 @@ import json
 import shortuuid
 
 from torch.utils.data import DataLoader
-from transformers import LogitsProcessorList, TemperatureLogitsWarper, TopPLogitsWarper
+from transformers import LogitsProcessorList
 
 from marine.utils.utils import get_chunk, get_answers_file_name, get_model_name_from_path
 from marine.utils.utils_dataset import COCOEvalDataset, custom_collate_fn
