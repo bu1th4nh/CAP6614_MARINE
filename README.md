@@ -187,6 +187,8 @@ bash scripts/eval_llava2.sh
 
 This script handles both generation and evaluation using the CHAIR and POPE metrics.
 
+Note: Evaluation results may vary slightly depending on the order of objects in the guidance list during generation.
+
 ---
 
 #### 🔍 What `eval_llava2.sh` Does
