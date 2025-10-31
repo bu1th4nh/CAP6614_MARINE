@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import time
 import torch
@@ -10,11 +11,11 @@ from torch import nn
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from transformers import DetrForObjectDetection
+
+
 print("Current working directory:", os.getcwd())
+sys.path.append(os.getcwd())
 from eval.utils import load_config
-
-
-
 
 torch.set_grad_enabled(False)
 
