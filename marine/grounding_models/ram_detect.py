@@ -90,7 +90,7 @@ if __name__ == "__main__":
     logging.info(f"Loaded {len(image_list)} images from question path: {question_path}")
     logging.info(f"Creating dataset with {len(dataset)} images from image directory: {image_dir}")
 
-    dataloader = DataLoader(dataset, batch_size=32, shuffle=False)
+    dataloader = DataLoader(dataset, batch_size=1, shuffle=False)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = ram_plus(
@@ -101,7 +101,7 @@ if __name__ == "__main__":
     ).to(device).eval()
 
     results_dict_ls = []
-    for image_tensors, image_paths, _ in dataloader:
+    for image_tensors, image_paths, _ in tqdm(dataloader, desc="Processing images", total=len(dataloader)):
         image_tensors = image_tensors.to(device)
         tags = inference(image_tensors, model)[0]
         tags = tags.split(' | ')
