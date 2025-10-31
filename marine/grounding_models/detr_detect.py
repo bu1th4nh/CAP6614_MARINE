@@ -63,23 +63,25 @@ class ImageDataset(Dataset):
 
 
 def load_image_list(json_path: str) -> List[str]:
-    logging.info(f"[DEBUG-THANH] Loading image paths from {json_path}...")
-    logging.fatal(f"[DEBUG-THANH] json_path_exists: {os.path.exists(json_path)}")
+    # logging.info(f"[DEBUG-THANH] Loading image paths from {json_path}...")
+    # logging.fatal(f"[DEBUG-THANH] json_path_exists: {os.path.exists(json_path)}")
     f = open(json_path, 'r')
     data = [json.loads(line) for line in f]
     f.close()
-    logging.fatal(f"[DEBUG-THANH] Loaded {len(data)} entries from {json_path}")
+    # logging.fatal(f"[DEBUG-THANH] Loaded {len(data)} entries from {json_path}")
 
 
+
+    # images = set()
+    # with open(json_path, 'r') as f:
+    #     try:
+    #         data = json.load(f)
+    #         logging.info(f"Loaded {len(data)} entries from {json_path}")
+    #     except:
+    #         data = [json.loads(line) for line in f]
+    #         logging.info(f"Loaded {len(data)} entries from {json_path} (line by line)")
 
     images = set()
-    with open(json_path, 'r') as f:
-        try:
-            data = json.load(f)
-            logging.info(f"Loaded {len(data)} entries from {json_path}")
-        except:
-            data = [json.loads(line) for line in f]
-            logging.info(f"Loaded {len(data)} entries from {json_path} (line by line)")
     for entry in tqdm(data, desc="Extracting image paths"):
         if "image" in entry:
             images.add(entry["image"])
