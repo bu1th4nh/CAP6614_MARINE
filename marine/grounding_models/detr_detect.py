@@ -63,6 +63,7 @@ class ImageDataset(Dataset):
 
 
 def load_image_list(json_path: str) -> List[str]:
+    logging.info(f"Loading image paths from {json_path}...")
     images = set()
     with open(json_path, 'r') as f:
         try:
