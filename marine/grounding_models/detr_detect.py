@@ -66,8 +66,10 @@ def load_image_list(json_path: str) -> List[str]:
     with open(json_path, 'r') as f:
         try:
             data = json.load(f)
+            logging.info(f"Loaded {len(data)} entries from {json_path}")
         except:
             data = [json.loads(line) for line in f]
+            logging.info(f"Loaded {len(data)} entries from {json_path} (line by line)")
     for entry in data:
         if "image" in entry:
             images.add(entry["image"])
