@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import sys
 from typing import List
 from PIL import Image
 from ram.models import ram_plus
@@ -8,7 +9,12 @@ from ram import inference_ram as inference, get_transform
 import torch
 from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as T
+
+
+print("Current working directory:", os.getcwd())
+sys.path.append(os.getcwd())
 from eval.utils import load_config
+
 
 torch.set_grad_enabled(False)
 
