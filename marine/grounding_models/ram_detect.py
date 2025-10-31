@@ -1,7 +1,14 @@
+import sys
+sys.path.append(os.getcwd())
+from log_config import initialize_logging
+
+initialize_logging()
+
 import argparse
 import json
 import os
 import sys
+import logging
 from typing import List
 from PIL import Image
 from ram.models import ram_plus
@@ -10,9 +17,6 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as T
 
-
-print("Current working directory:", os.getcwd())
-sys.path.append(os.getcwd())
 from eval.utils import load_config
 
 
@@ -94,4 +98,4 @@ if __name__ == "__main__":
 
     with open(args.save_path, "w") as f:
         json.dump(results_dict_ls, f, indent=4)
-    print(f"Results saved to {args.save_path}")
+    logging.info(f"Results saved to {args.save_path}")

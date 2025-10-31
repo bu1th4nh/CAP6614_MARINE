@@ -1,5 +1,12 @@
+import sys
+sys.path.append(os.getcwd())
+from log_config import initialize_logging
+
+initialize_logging()
+
 import os
 import json
+import logging
 import numpy as np
 from typing import List, Dict
 from prompt_template import (
@@ -85,8 +92,8 @@ def generate_qa_guidance(question_path, guidance_path, metric, save_dir, save_na
         with open(guidance_path, 'r') as f:
             guidance = json.load(f)
 
-    print("Loaded", len(questions), "questions")
-    print("Loaded", len(guidance), "guidance entries")
+    logging.info("Loaded", len(questions), "questions")
+    logging.info("Loaded", len(guidance), "guidance entries")
 
     np.random.seed(42)
     random_list = np.random.randint(0, 4, len(questions))
@@ -135,7 +142,7 @@ def generate_qa_guidance(question_path, guidance_path, metric, save_dir, save_na
 
     with open(os.path.join(save_dir, "question", save_name), 'w') as f:
         json.dump(questions_out, f, indent=4)
-        print(f"Saved {len(questions_out)} questions to {os.path.join(save_dir, 'question', save_name)}")
+        logging.info(f"Saved {len(questions_out)} questions to {os.path.join(save_dir, 'question', save_name)}")
 
     if labels_out:
         with open(os.path.join(save_dir, "label", save_name.replace(".json", "_label.json")), 'w') as f:

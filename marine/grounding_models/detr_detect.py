@@ -1,8 +1,15 @@
+import sys
+sys.path.append(os.getcwd())
+from log_config import initialize_logging
+
+initialize_logging()
+
 import os
 import sys
 import json
 import time
 import torch
+import logging
 import argparse
 from PIL import Image
 from typing import List
@@ -13,8 +20,6 @@ from torchvision import transforms
 from transformers import DetrForObjectDetection
 
 
-print("Current working directory:", os.getcwd())
-sys.path.append(os.getcwd())
 from eval.utils import load_config
 
 torch.set_grad_enabled(False)
@@ -108,7 +113,7 @@ if __name__ == "__main__":
     model.eval().cuda()
 
     start = time.time()
-    print(f"[INFO] Running detection with threshold {args.th}...")
+    logging.info(f"Running detection with threshold {args.th}...")
 
     result_batch = []
     for image_tensors, image_names in dataloader:
@@ -123,5 +128,5 @@ if __name__ == "__main__":
 
     save_results(result_batch, args.save_path)
 
-    print(f"[INFO] Detection complete. Time taken: {round(time.time() - start, 2)}s")
-    print(f"[INFO] Results saved to {args.save_path}")
+    logging.info(f"Detection complete. Time taken: {round(time.time() - start, 2)}s")
+    logging.info(f"Results saved to {args.save_path}")
