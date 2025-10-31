@@ -10,6 +10,7 @@ import json
 import os
 import sys
 import logging
+from tqdm import tqdm
 from typing import List
 from PIL import Image
 from ram.models import ram_plus
@@ -56,16 +57,21 @@ class ImageDataset(Dataset):
         return self.transform(image), image_path, T.ToTensor()(image)
 
 def load_image_list(json_path: str) -> List[str]:
+    f = open(json_path, 'r')
+    data = [json.loads(line) for line in f]
+    f.close()
+
+
     images = set()
-    with open(json_path, 'r') as f:
-        try:
-            data = json.load(f)
-        except:
-            data = [json.loads(line) for line in f]
-    for entry in data:
+    for entry in tqdm(data, desc="Extracting image paths"):
         if "image" in entry:
             images.add(entry["image"])
+        else:
+            logging.warning(f"Entry does not contain 'image' key: {entry}")
     return list(images)
+
+
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -80,7 +86,11 @@ if __name__ == "__main__":
     image_list = load_image_list(question_path)
 
     dataset = ImageDataset(image_dir, image_list)
-    dataloader = DataLoader(dataset, batch_size=1, shuffle=False)
+
+    logging.info(f"Loaded {len(image_list)} images from question path: {question_path}")
+    logging.info(f"Creating dataset with {len(dataset)} images from image directory: {image_dir}")
+
+    dataloader = DataLoader(dataset, batch_size=32, shuffle=False)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = ram_plus(
