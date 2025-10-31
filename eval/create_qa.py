@@ -7,10 +7,10 @@ from log_config import initialize_logging
 initialize_logging()
 
 import os
-import tqdm
 import json
 import logging
 import numpy as np
+from tqdm import tqdm
 from typing import List, Dict
 from prompt_template import (
     PromptTemplate,
