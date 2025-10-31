@@ -12,6 +12,7 @@ import time
 import torch
 import logging
 import argparse
+from tqdm import tqdm
 from PIL import Image
 from typing import List
 import matplotlib.pyplot as plt
@@ -70,9 +71,11 @@ def load_image_list(json_path: str) -> List[str]:
         except:
             data = [json.loads(line) for line in f]
             logging.info(f"Loaded {len(data)} entries from {json_path} (line by line)")
-    for entry in data:
+    for entry in tqdm(data, desc="Extracting image paths"):
         if "image" in entry:
             images.add(entry["image"])
+        else:
+            logging.warning(f"Entry does not contain 'image' key: {entry}")
     return list(images)
 
 
