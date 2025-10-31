@@ -11,6 +11,7 @@ SAVE_DIR="./data/marine_qa/"
 
 ########## Visual grounding ##########
 ###### DETR
+echo "---------------------------------------------------------------------------------------------------------------------------------"
 echo "Running DETR on ${METRIC} with threshold ${THRESHOLD_DETR}"
 python ./marine/grounding_models/detr_detect.py \
     --th ${THRESHOLD_DETR} \
@@ -21,6 +22,7 @@ python ./marine/grounding_models/detr_detect.py \
 
 
 ###### RAM++
+echo "---------------------------------------------------------------------------------------------------------------------------------"
 echo "Running RAM++ on ${METRIC} with threshold ${THRESHOLD_RAM}"
 python ./marine/grounding_models/ram_detect.py \
     --th ${THRESHOLD_RAM} \
@@ -31,6 +33,7 @@ python ./marine/grounding_models/ram_detect.py \
 
 
 ########## QA generation ##########
+echo "---------------------------------------------------------------------------------------------------------------------------------"
 echo "Generating QA on ${METRIC} of Dataset ${DATASET} with guidance from DETR and RAM"
 python ./eval/create_qa.py \
     --metric ${METRIC} \
