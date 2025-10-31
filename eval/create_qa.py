@@ -1,11 +1,13 @@
 import os
 import sys
+
 sys.path.append(os.getcwd())
 from log_config import initialize_logging
 
 initialize_logging()
 
 import os
+import tqdm
 import json
 import logging
 import numpy as np
@@ -102,7 +104,7 @@ def generate_qa_guidance(question_path, guidance_path, metric, save_dir, save_na
     questions_out = []
     labels_out = []
 
-    for i, q in enumerate(questions):
+    for i, q in tqdm(enumerate(questions), total=len(questions), desc="Processing questions"):
         # match image
         matched = next((g for g in guidance if g['image'] == q['image']), None)
         if matched is None:
