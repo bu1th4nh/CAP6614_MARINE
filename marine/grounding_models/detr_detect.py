@@ -10,9 +10,9 @@ from torch import nn
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from transformers import DetrForObjectDetection
+print("Current working directory:", os.getcwd())
 from eval.utils import load_config
 
-print("Current working directory:", os.getcwd())
 
 
 
