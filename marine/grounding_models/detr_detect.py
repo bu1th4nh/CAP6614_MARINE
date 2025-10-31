@@ -126,7 +126,7 @@ if __name__ == "__main__":
     logging.info(f"Running detection with threshold {args.th}...")
 
     result_batch = []
-    for image_tensors, image_names in dataloader:
+    for image_tensors, image_names in tqdm(dataloader, desc="Processing images", total=len(dataloader)):
         image_tensors = image_tensors.cuda()
         detections = detect(image_tensors, model, args.th)
 
