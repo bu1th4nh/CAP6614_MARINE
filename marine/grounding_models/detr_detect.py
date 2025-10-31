@@ -12,6 +12,9 @@ from torchvision import transforms
 from transformers import DetrForObjectDetection
 from eval.utils import load_config
 
+print("Current working directory:", os.getcwd())
+
+
 
 torch.set_grad_enabled(False)
 
