@@ -71,6 +71,10 @@ def find_intersection_nouns_original(obj_list1, obj_list2):
 
 def generate_qa_guidance(question_path, guidance_path, metric, save_dir, save_name, grounding_template):
 
+    logging.info(f"Generating QA guidance for metric: {metric}")
+    logging.info(f"Question path: {question_path}")
+    logging.info(f"Guidance path: {guidance_path}")
+
     # Load questions
     try:
         with open(question_path, 'r') as f:
