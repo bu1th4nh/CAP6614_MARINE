@@ -63,7 +63,15 @@ class ImageDataset(Dataset):
 
 
 def load_image_list(json_path: str) -> List[str]:
-    logging.info(f"Loading image paths from {json_path}...")
+    logging.info(f"[DEBUG-THANH] Loading image paths from {json_path}...")
+    logging.fatal(f"[DEBUG-THANH] json_path_exists: {os.path.exists(json_path)}")
+    f = open(json_path, 'r')
+    data = [json.loads(line) for line in f]
+    f.close()
+    logging.fatal(f"[DEBUG-THANH] Loaded {len(data)} entries from {json_path}")
+
+
+
     images = set()
     with open(json_path, 'r') as f:
         try:
