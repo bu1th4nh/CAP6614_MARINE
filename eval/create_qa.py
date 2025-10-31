@@ -93,8 +93,8 @@ def generate_qa_guidance(question_path, guidance_path, metric, save_dir, save_na
         with open(guidance_path, 'r') as f:
             guidance = json.load(f)
 
-    logging.info("Loaded", len(questions), "questions")
-    logging.info("Loaded", len(guidance), "guidance entries")
+    logging.info(f"Loaded {len(questions)} questions")
+    logging.info(f"Loaded {len(guidance)} guidance entries")
 
     np.random.seed(42)
     random_list = np.random.randint(0, 4, len(questions))
