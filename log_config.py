@@ -51,6 +51,11 @@ def initialize_logging(log_filename: Union[str, None] = None):
         )
     )
 
+    logging.basicConfig(
+        level    = logging.INFO,
+        handlers = [handler_sh]
+    )
+
     # handler_api_sh = logging.StreamHandler(sys.stdout)
     # handler_api_sh.setFormatter(
     #     ColoredFormatter(
