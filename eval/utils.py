@@ -1,4 +1,5 @@
 import yaml
+import logging
 
 
 def load_config(benchmark, dataset, config_path="config/benchmark_config.yaml"):
@@ -14,5 +15,9 @@ def load_config(benchmark, dataset, config_path="config/benchmark_config.yaml"):
 
     question_path = bench_conf["question_path"].format(dataset=dataset)
     image_dir = bench_conf["image_dir"].format(dataset=dataset)
+
+    logging.info(f"Loaded configuration for benchmark '{benchmark}' and dataset '{dataset}'")
+    logging.info(f"Question path: {question_path}")
+    logging.info(f"Image directory: {image_dir}")
 
     return question_path, image_dir
