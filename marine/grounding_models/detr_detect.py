@@ -107,7 +107,13 @@ if __name__ == "__main__":
 
     image_list = load_image_list(question_path)
 
+    # logging.info(f"Image directory: {image_dir}")
+
     dataset = ImageDataset(image_dir, image_list)
+
+    logging.info(f"Loaded {len(image_list)} images from question path: {question_path}")
+    logging.info(f"Creating dataset with {len(dataset)} images from image directory: {image_dir}")
+
     dataloader = DataLoader(dataset, batch_size=4, shuffle=False)
 
     model = DetrForObjectDetection.from_pretrained("facebook/detr-resnet-50")
