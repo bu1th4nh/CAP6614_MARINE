@@ -39,7 +39,6 @@ def eval_model(args):
     # Model
     model_path = args.model_path
     model_name = get_model_name_from_path(model_path)
-    
     model, tokenizer, processor = load_model(model_name, model_path)
 
     # QA Data
