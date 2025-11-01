@@ -200,16 +200,16 @@ def custom_collate_instructblip(batch: List[Tuple[
     finished_attention_masks          = process_sequence(attention_masks).cuda()
     finished_guidance_attention_masks = process_sequence(guidance_attention_masks).cuda()
 
-    finished_inputs = {
+    finished_inputs = type(inputs[0])({
         "input_ids": finished_input_ids,
         "pixel_values": finished_images,
         "attention_mask": finished_attention_masks
-    }
-    finished_guidance_inputs = {
+    })
+    finished_guidance_inputs = type(guidance_inputs[0])({
         "input_ids": finished_guidance_ids,
         "pixel_values": finished_guidance_images,
         "attention_mask": finished_guidance_attention_masks
-    }
+    })
 
     return (
         list(prompts),
