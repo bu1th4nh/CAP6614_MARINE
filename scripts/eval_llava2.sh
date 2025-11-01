@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-export PYTHONPATH=$PYTHONPATH:/home/ti514716/Pretrained/llava2
+export PYTHONPATH=$PYTHONPATH:/home/ti514716/Pretrained/llava2/
 
 MODEL_NAME="llava2"
 MODEL_VERSION="llava-hf/llava-1.5-7b-hf"
