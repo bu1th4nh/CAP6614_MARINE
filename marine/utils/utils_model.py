@@ -10,10 +10,8 @@ def load_model(model_name: str, model_path: str):
         A dictionary containing loaded components: model, tokenizer, processor/image_processor
     """
     model_name = model_name.lower()
-
-    if model_name == "llava-1.5-7b-hf":
+    if "llava" in model_name:
         from transformers import AutoProcessor, LlavaForConditionalGeneration
-
 
         model = LlavaForConditionalGeneration.from_pretrained(model_path).cuda()
         processor = AutoProcessor.from_pretrained(model_path)
@@ -21,7 +19,7 @@ def load_model(model_name: str, model_path: str):
 
         return model, tokenizer, processor
 
-    elif model_name == "instructblip-vicuna-7b":
+    elif "instructblip" in model_name:
         from transformers import InstructBlipProcessor, InstructBlipForConditionalGeneration
 
         model = InstructBlipForConditionalGeneration.from_pretrained(model_path).cuda()
