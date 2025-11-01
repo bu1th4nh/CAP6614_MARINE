@@ -49,7 +49,8 @@ def eval_model(args):
     ans_file = open(answers_file, "w")
 
 
-    logging.info(f"Loading questions from {args.question_path} with file {args.question_file}...")
+    logging.info(f"Loaded model {model_name}.")
+    
     logging.info(f"Loaded {len(questions)} questions for evaluation.")
     logging.info(f"Creating dataset for evaluation with {len(questions)} questions, image folder: {args.image_folder}, model: {model_name}, conv_mode: {args.conv_mode}...")
 
