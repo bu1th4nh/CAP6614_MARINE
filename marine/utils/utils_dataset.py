@@ -1,5 +1,5 @@
 import os
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 import torch
 from torch.utils.data import Dataset
@@ -147,3 +147,60 @@ def custom_collate_fn(batch: List[Tuple[
         attn_mask_batch,
         guidance_attn_mask_batch
     )
+
+
+def custom_collate_instructblip(batch: List[Tuple[
+    str,          # cur_prompt
+    str,          # question_id
+    str,          # img_id
+    Any,          # inputs
+    Any           # guidance_inputs
+]]) -> Tuple[torch.Tensor, ...]:
+    """
+    Custom collate function to pad input/guidance_ids and attention masks,
+    and stack image tensors. All outputs are moved to CUDA.
+    """
+    (
+        prompts,
+        question_ids,
+        img_ids,
+        inputs,
+        guidance_inputs
+    ) = zip(*batch)
+
+    def process_sequence(seq_list):
+        seq_list = [seq.squeeze(0).flip(dims=[0]) for seq in seq_list]
+        return pad_sequence(seq_list, batch_first=True, padding_value=0).flip(dims=[1])
+
+    finished_inputs = inputs.copy()
+    finished_guidance_inputs = guidance_inputs.copy()
+    
+    finished_inputs["input_ids"] = process_sequence(
+        [inp["input_ids"] for inp in inputs]
+    ).cuda()
+    finished_guidance_inputs["input_ids"] = process_sequence(
+        [g_inp["input_ids"] for g_inp in guidance_inputs]
+    ).cuda()
+    finished_inputs["pixel_values"] = torch.stack(
+        [inp["pixel_values"].squeeze(0) for inp in inputs]
+    ).cuda()
+    finished_guidance_inputs["pixel_values"] = torch.stack(
+        [g_inp["pixel_values"].squeeze(0) for g_inp in guidance_inputs]
+    ).cuda()
+    finished_inputs["attention_mask"] = process_sequence(
+        [inp["attention_mask"] for inp in inputs]
+    ).cuda()
+    finished_guidance_inputs["attention_mask"] = process_sequence(
+        [g_inp["attention_mask"] for g_inp in guidance_inputs]
+    ).cuda()
+
+    
+    return (
+        list(prompts),
+        list(question_ids),
+        list(img_ids),
+        finished_inputs,
+        finished_guidance_inputs
+    )
+
+
