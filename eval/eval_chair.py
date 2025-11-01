@@ -263,14 +263,12 @@ class CHAIR(object):
         for cat in coco_segments['categories']:
             id_to_name[cat['id']] = cat['name']
 
-        for i, annotation in enumerate(segment_annotations):
-            sys.stdout.write("\rGetting annotations for %d/%d segmentation masks"
-                             % (i, len(segment_annotations)))
+        for i, annotation in tqdm(enumerate(segment_annotations), desc=f"Getting annotations for {len(segment_annotations)} segmentation annotations"):
             imid = annotation['image_id']
 
             node_word = self.inverse_synonym_dict[id_to_name[annotation['category_id']]]
             self.imid_to_objects[imid].append(node_word)
-        logging.info("\n")
+        logging.info(f"Loaded annotations for {len(self.imid_to_objects)} images from MSCOCO segmentation annotations.")
 
     def get_annotations_from_captions(self):
         '''
@@ -280,15 +278,13 @@ class CHAIR(object):
         coco_caps = combine_coco_captions(self.coco_path)
         caption_annotations = coco_caps['annotations']
 
-        for i, annotation in enumerate(caption_annotations):
-            sys.stdout.write('\rGetting annotations for %d/%d ground truth captions'
-                             % (i, len(coco_caps['annotations'])))
+        for i, annotation in tqdm(enumerate(caption_annotations), desc=f"Getting annotations for {len(caption_annotations)} ground truth captions"):
             imid = annotation['image_id']
 
             _, node_words, _, _ = self.caption_to_words(annotation['caption'])
             # note here is update, so call get_annotations_from_segments first
             self.imid_to_objects[imid].extend(node_words)
-        print("\n")
+        logging.info(f"Loaded annotations for {len(self.imid_to_objects)} images from MSCOCO segmentation and caption annotations.")
 
     def get_annotations(self):
         '''
