@@ -22,7 +22,8 @@ class COCOEvalDataset(Dataset):
         processor,
         tokenizer,
         conv_mode: str,
-        mm_use_im_start_end: bool
+        mm_use_im_start_end: bool,
+        custom_flavor: str = None
     ):
         self.questions = questions
         self.image_dir = image_dir
@@ -30,6 +31,7 @@ class COCOEvalDataset(Dataset):
         self.tokenizer = tokenizer
         self.conv_mode = conv_mode
         self.mm_use_im_start_end = mm_use_im_start_end
+        self.custom_flavor = custom_flavor
 
     def __len__(self) -> int:
         return len(self.questions)
@@ -71,18 +73,27 @@ class COCOEvalDataset(Dataset):
         # Tokenize
         inputs = self.processor(text=full_prompt, images=image, return_tensors="pt")
         guidance_inputs = self.processor(text=full_prompt_neg, images=image, return_tensors="pt")
-
-        return (
-            cur_prompt,
-            question_id,
-            img_id,
-            inputs["input_ids"],
-            guidance_inputs["input_ids"],
-            inputs["pixel_values"],
-            guidance_inputs["pixel_values"],
-            inputs["attention_mask"],
-            guidance_inputs["attention_mask"]
-        )
+        
+        if self.custom_flavor == "instructblip":
+            return (
+                cur_prompt,
+                question_id,
+                img_id,
+                inputs,
+                guidance_inputs
+            )
+        else:
+            return (
+                cur_prompt,
+                question_id,
+                img_id,
+                inputs["input_ids"],
+                guidance_inputs["input_ids"],
+                inputs["pixel_values"],
+                guidance_inputs["pixel_values"],
+                inputs["attention_mask"],
+                guidance_inputs["attention_mask"]
+            )
 
 
 def custom_collate_fn(batch: List[Tuple[

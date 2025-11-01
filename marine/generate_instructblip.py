@@ -56,7 +56,14 @@ def eval_model(args):
     os.makedirs(os.path.dirname(answers_file), exist_ok=True)
     ans_file = open(answers_file, "w")
 
-    dataset = COCOEvalDataset(questions, args.image_folder, processor, tokenizer, args.conv_mode, getattr(model.config, 'mm_use_im_start_end', False))
+    dataset = COCOEvalDataset(
+        questions, 
+        args.image_folder,
+        processor, tokenizer, 
+        args.conv_mode, 
+        getattr(model.config, 'mm_use_im_start_end', False),
+        custom_flavor='instructblip'
+    )
     eval_dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, collate_fn=custom_collate_fn)
 
     # generate
@@ -64,13 +71,15 @@ def eval_model(args):
         prompts, 
         question_ids, 
         img_ids, 
-        input_ids, 
-        guidance_ids, 
-        images, 
-        guidance_images, 
-        attention_masks, 
-        guidance_attention_masks
+        inputs,
+        guidance_inputs
     ) in tqdm(eval_dataloader, desc="Evaluating", total=len(eval_dataloader)):
+        input_ids                = inputs["input_ids"]
+        guidance_ids             = guidance_inputs["input_ids"]
+        images                   = inputs["pixel_values"]
+        guidance_images          = guidance_inputs["pixel_values"]
+        attention_masks          = inputs["attention_mask"]
+        guidance_attention_masks = guidance_inputs["attention_mask"]
 
         logging.info(f"Processing batch with question_ids: {question_ids}")
         logging.info(f"Processing batch with img_ids     : {img_ids}")
@@ -87,8 +96,9 @@ def eval_model(args):
             if args.guidance_strength == 0:
                 logging.info("Generating without guidance...")
                 output_ids = model.generate(
-                    pixel_values=images,
-                    input_ids=input_ids,
+                    # pixel_values=images,
+                    # input_ids=input_ids,
+                    **inputs,
                     do_sample=args.sampling,
                     temperature=args.temperature,
                     top_p=args.top_p,
@@ -98,8 +108,9 @@ def eval_model(args):
             else:
                 logging.info(f"Generating with guidance strength {args.guidance_strength}...")
                 output_ids = model.generate(
-                    pixel_values=images,
-                    input_ids=input_ids,
+                    # pixel_values=images,
+                    # input_ids=input_ids,
+                    **inputs,
                     do_sample=args.sampling,
                     temperature=args.temperature,
                     top_p=args.top_p,
