@@ -174,8 +174,8 @@ def custom_collate_instructblip(batch: List[Tuple[
         guidance_inputs
     ) = zip(*batch)
 
-    logging.fatal(str(type(inputs)))
-    logging.fatal(str(type(guidance_inputs)))
+    logging.fatal(' '.join([str(type(item)) for item in inputs]))
+    # logging.fatal(str(type(guidance_inputs)))
 
     print()
 
@@ -183,28 +183,33 @@ def custom_collate_instructblip(batch: List[Tuple[
         seq_list = [seq.squeeze(0).flip(dims=[0]) for seq in seq_list]
         return pad_sequence(seq_list, batch_first=True, padding_value=0).flip(dims=[1])
 
-    finished_inputs = inputs
-    finished_guidance_inputs = guidance_inputs
+    input_ids                = inputs["input_ids"]
+    guidance_ids             = guidance_inputs["input_ids"]
+    images                   = inputs["pixel_values"]
+    guidance_images          = guidance_inputs["pixel_values"]
+    attention_masks          = inputs["attention_mask"]
+    guidance_attention_masks = guidance_inputs["attention_mask"]
 
-    finished_inputs["input_ids"] = process_sequence(
-        [inp["input_ids"] for inp in inputs]
-    ).cuda()
-    finished_guidance_inputs["input_ids"] = process_sequence(
-        [g_inp["input_ids"] for g_inp in guidance_inputs]
-    ).cuda()
-    finished_inputs["pixel_values"] = torch.stack(
-        [inp["pixel_values"].squeeze(0) for inp in inputs]
-    ).cuda()
-    finished_guidance_inputs["pixel_values"] = torch.stack(
-        [g_inp["pixel_values"].squeeze(0) for g_inp in guidance_inputs]
-    ).cuda()
-    finished_inputs["attention_mask"] = process_sequence(
-        [inp["attention_mask"] for inp in inputs]
-    ).cuda()
-    finished_guidance_inputs["attention_mask"] = process_sequence(
-        [g_inp["attention_mask"] for g_inp in guidance_inputs]
-    ).cuda()
 
+    finished_input_ids         = process_sequence(input_ids).cuda()
+    finished_guidance_ids      = process_sequence(guidance_ids).cuda()
+
+    finished_images            = torch.stack(images).squeeze(1).cuda()
+    finished_guidance_images   = torch.stack(guidance_images).squeeze(1).cuda()
+
+    finished_attention_masks          = process_sequence(attention_masks).cuda()
+    finished_guidance_attention_masks = process_sequence(guidance_attention_masks).cuda()
+
+    finished_inputs = {
+        "input_ids": finished_input_ids,
+        "pixel_values": finished_images,
+        "attention_mask": finished_attention_masks
+    }
+    finished_guidance_inputs = {
+        "input_ids": finished_guidance_ids,
+        "pixel_values": finished_guidance_images,
+        "attention_mask": finished_guidance_attention_masks
+    }
 
     return (
         list(prompts),
