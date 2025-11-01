@@ -3,13 +3,14 @@ import sys
 import nltk
 import json
 import argparse
-import tqdm
+import tqdm as tqdm_lib
 import pickle
 from collections import defaultdict
 
 
 import os
 import sys
+from tqdm import tqdm
 sys.path.append(os.getcwd())
 from log_config import initialize_logging
 
@@ -321,7 +322,7 @@ class CHAIR(object):
         output = {'sentences': []}
         hallucinated_caps_ls = []
 
-        for i in tqdm.trange(len(caps)):
+        for i in tqdm_lib.trange(len(caps)):
             cap: str = caps[i]
             imid: int = eval_imids[i]
 
