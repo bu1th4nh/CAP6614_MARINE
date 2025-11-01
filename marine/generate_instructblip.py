@@ -35,7 +35,9 @@ def eval_model(args):
     logging.info(f"Using seed: {args.seed}, guidance_strength: {args.guidance_strength}, batch_size: {args.batch_size}, sampling: {args.sampling}")
 
 
-
+    print()
+    print()
+    logging.info("==============================================================================================================================")
     # Model
     model_path = args.model_path
     model_name = get_model_name_from_path(model_path)
@@ -66,6 +68,7 @@ def eval_model(args):
 
         with torch.inference_mode():
             if args.guidance_strength == 0:
+                logging.info("Generating without guidance...")
                 output_ids = model.generate(
                     pixel_values=images,
                     input_ids=input_ids,
@@ -77,6 +80,7 @@ def eval_model(args):
                     use_cache=True
                 )
             else:
+                logging.info(f"Generating with guidance strength {args.guidance_strength}...")
                 output_ids = model.generate(
                     pixel_values=images,
                     input_ids=input_ids,
