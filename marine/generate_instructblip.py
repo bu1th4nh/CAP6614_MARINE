@@ -73,7 +73,12 @@ def eval_model(args):
     ) in tqdm(eval_dataloader, desc="Evaluating", total=len(eval_dataloader)):
 
         logging.info(f"Processing batch with question_ids: {question_ids}, img_ids: {img_ids}")
-        logging.info(f"Input IDs shape: {input_ids.shape}, Guidance IDs shape: {guidance_ids.shape}, Images shape: {images.shape}, Guidance Images shape: {guidance_images.shape}, Attention Masks shape: {attention_masks.shape}, Guidance Attention Masks shape: {guidance_attention_masks.shape}")
+        logging.info(f"Input IDs shape                   : {input_ids.shape}") 
+        logging.info(f"Guidance IDs shape                : {guidance_ids.shape}") 
+        logging.info(f"Images shape                      : {images.shape}") 
+        logging.info(f"Guidance Images shape             : {guidance_images.shape}") 
+        logging.info(f"Attention Masks shape             : {attention_masks.shape}") 
+        logging.info(f"Guidance Attention Masks shape    : {guidance_attention_masks.shape}")
 
         with torch.inference_mode():
             if args.guidance_strength == 0:
