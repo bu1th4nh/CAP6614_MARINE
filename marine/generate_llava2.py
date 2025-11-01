@@ -26,13 +26,13 @@ from marine.utils.utils_model import load_model
 
 def eval_model(args):
 
-    logging.info(f"Evaluating model: {str(args.model_path)}")
-    logging.info(f"Loading questions from {str(args.question_path)} and {str(args.question_file)}...")
-    logging.info(f"Loading images from {str(args.image_folder)}...")
-    logging.info(f"Using conv mode: {args.conv_mode}")
-    logging.info(f"Using num_chunks: {args.num_chunks} and chunk_idx: {args.chunk_idx}")
-    logging.info(f"Using temperature: {args.temperature}, top_p: {args.top_p}, max_new_tokens: {args.max_new_tokens}")
-    logging.info(f"Using seed: {args.seed}, guidance_strength: {args.guidance_strength}, batch_size: {args.batch_size}, sampling: {args.sampling}")
+    # logging.info(f"Evaluating model: {str(args.model_path)}")
+    # logging.info(f"Loading questions from {str(args.question_path)} and {str(args.question_file)}...")
+    # logging.info(f"Loading images from {str(args.image_folder)}...")
+    # logging.info(f"Using conv mode: {args.conv_mode}")
+    # logging.info(f"Using num_chunks: {args.num_chunks} and chunk_idx: {args.chunk_idx}")
+    # logging.info(f"Using temperature: {args.temperature}, top_p: {args.top_p}, max_new_tokens: {args.max_new_tokens}")
+    # logging.info(f"Using seed: {args.seed}, guidance_strength: {args.guidance_strength}, batch_size: {args.batch_size}, sampling: {args.sampling}")
 
 
 
