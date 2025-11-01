@@ -72,6 +72,7 @@ def eval_model(args):
                     input_ids=input_ids,
                     do_sample=args.sampling,
                     temperature=args.temperature,
+                    attention_mask=attention_masks,
                     top_p=args.top_p,
                     max_new_tokens=args.max_new_tokens,
                     use_cache=True
@@ -83,6 +84,7 @@ def eval_model(args):
                     do_sample=args.sampling,
                     temperature=args.temperature,
                     top_p=args.top_p,
+                    attention_mask=attention_masks,
                     max_new_tokens=args.max_new_tokens,
                     use_cache=True,
                     logits_processor=LogitsProcessorList([
