@@ -473,7 +473,7 @@ def save_results(output, save_dir, cap_file):
 
     logging.info(f"Sentence: {output['sentences'][0]}")
     logging.info(f"Overall Metrics: {output['overall_metrics']}")
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
     detailed_output_dict = {'overall_metrics': output['overall_metrics'],
                             'results': output['sentences']}
 
