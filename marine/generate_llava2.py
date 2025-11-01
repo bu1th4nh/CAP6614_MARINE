@@ -1,11 +1,22 @@
+import os
+import sys
+sys.path.append(os.getcwd())
+from log_config import initialize_logging
+
+initialize_logging()
+
+
 import argparse
 import torch
 import os
 import json
 import shortuuid
 
+
 from torch.utils.data import DataLoader
 from transformers import LogitsProcessorList
+
+import logging
 
 from marine.utils.utils import get_chunk, get_answers_file_name, get_model_name_from_path
 from marine.utils.utils_dataset import COCOEvalDataset, custom_collate_fn
@@ -81,7 +92,7 @@ def eval_model(args):
 
             # Process each output
             output = output.strip()
-            print(f"{question_ids[i]}: {output}")
+            logging.info(f"{question_ids[i]}: {output}")
 
             # Generate answer ID and write to file
             ans_id = shortuuid.uuid()
@@ -95,7 +106,7 @@ def eval_model(args):
 
         ans_file.flush()
     ans_file.close()
-    print(f"Done! Saved answers to {answers_file}")
+    logging.info(f"Done! Saved answers to {answers_file}")
 
 
 if __name__ == "__main__":
