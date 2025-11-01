@@ -72,20 +72,23 @@ def eval_model(args):
         guidance_attention_masks
     ) in tqdm(eval_dataloader, desc="Evaluating", total=len(eval_dataloader)):
 
-        logging.info(f"Processing batch with question_ids: {question_ids}, img_ids: {img_ids}")
+        logging.info(f"Processing batch with question_ids: {question_ids}")
+        logging.info(f"Processing batch with img_ids     : {img_ids}")
+
         logging.info(f"Input IDs shape                   : {input_ids.shape}") 
-        logging.info(f"Guidance IDs shape                : {guidance_ids.shape}") 
         logging.info(f"Images shape                      : {images.shape}") 
-        logging.info(f"Guidance Images shape             : {guidance_images.shape}") 
         logging.info(f"Attention Masks shape             : {attention_masks.shape}") 
+
+        logging.info(f"Guidance IDs shape                : {guidance_ids.shape}") 
+        logging.info(f"Guidance Images shape             : {guidance_images.shape}") 
         logging.info(f"Guidance Attention Masks shape    : {guidance_attention_masks.shape}")
 
         with torch.inference_mode():
             if args.guidance_strength == 0:
                 logging.info("Generating without guidance...")
                 output_ids = model.generate(
-                    input = input_ids,
                     pixel_values=images,
+                    input_ids=input_ids,
                     do_sample=args.sampling,
                     temperature=args.temperature,
                     top_p=args.top_p,
@@ -95,8 +98,8 @@ def eval_model(args):
             else:
                 logging.info(f"Generating with guidance strength {args.guidance_strength}...")
                 output_ids = model.generate(
-                    input = input_ids,
                     pixel_values=images,
+                    input_ids=input_ids,
                     do_sample=args.sampling,
                     temperature=args.temperature,
                     top_p=args.top_p,
