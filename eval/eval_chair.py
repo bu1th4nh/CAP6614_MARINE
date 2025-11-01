@@ -8,6 +8,15 @@ import pickle
 from collections import defaultdict
 
 
+import os
+import sys
+sys.path.append(os.getcwd())
+from log_config import initialize_logging
+
+initialize_logging()
+
+
+import logging
 # copied from: https://github.com/LisaAnne/Hallucination/blob/master/data/synonyms.txt
 synonyms_txt = '''
 person, girl, boy, man, woman, kid, child, chef, baker, people, adult, rider, children, baby, worker, passenger, sister, biker, policeman, cop, officer, lady, cowboy, bride, groom, male, female, guy, traveler, mother, father, gentleman, pitcher, player, skier, snowboarder, skater, skateboarder, person, woman, guy, foreigner, child, gentleman, caller, offender, coworker, trespasser, patient, politician, soldier, grandchild, serviceman, walker, drinker, doctor, bicyclist, thief, buyer, teenager, student, camper, driver, solider, hunter, shopper, villager
@@ -261,7 +270,7 @@ class CHAIR(object):
 
             node_word = self.inverse_synonym_dict[id_to_name[annotation['category_id']]]
             self.imid_to_objects[imid].append(node_word)
-        print("\n")
+        logging.info("\n")
 
     def get_annotations_from_captions(self):
         '''
@@ -429,12 +438,12 @@ def match_qa_image_id(question_ls, answer_ls):
 def load_evaluator(args):
     if args.cache and os.path.exists(args.cache):
         args.evaluator = pickle.load(open(args.cache, 'rb'))
-        print(f"Loaded evaluator from cache: {args.cache}")
+        logging.info(f"Loaded evaluator from cache: {args.cache}")
     else:
-        print("Cache not found, building evaluator from scratch...")
+        logging.info("Cache not found, building evaluator from scratch...")
         args.evaluator = CHAIR(args.coco_path)
         pickle.dump(args.evaluator, open(args.cache, 'wb'))
-        print(f"Saved evaluator to cache: {args.cache}")
+        logging.info(f"Saved evaluator to cache: {args.cache}")
 
 
 # === Utilities ===
@@ -465,8 +474,8 @@ def save_results(output, save_dir, cap_file):
                     'overall_metrics': overall_metrics,
                     "detailed_results_file": detailed_results_file}
 
-    print(output['sentences'][0])
-    print(output['overall_metrics'])
+    logging.info(f"Sentence: {output['sentences'][0]}")
+    logging.info(f"Overall Metrics: {output['overall_metrics']}")
     import pdb; pdb.set_trace()
     detailed_output_dict = {'overall_metrics': output['overall_metrics'],
                             'results': output['sentences']}
@@ -478,7 +487,7 @@ def save_results(output, save_dir, cap_file):
         json.dump(results_dict, f)
         f.write('\n')
 
-    print(f"== Saving results to {results_file} ==")
+    logging.info(f"== Saving results to {results_file} ==")
 
 
 def print_metrics(hallucination_cap_dict):
@@ -488,7 +497,7 @@ def print_metrics(hallucination_cap_dict):
         if k in ['CHAIRs', 'CHAIRi', 'Recall']:
             k_str = str(k).ljust(10)
             v_str = f'{v * 100:.01f}'  # + '%'
-            print(k_str, v_str, sep=': ')
+            logging.info(f"{k_str}: {v_str}")
 
 def save_file_check(args):
     file_name = "eval.json"
@@ -518,6 +527,14 @@ def main():
     parser.add_argument('--save_path', default='chair_eval.json')
     args = parser.parse_args()
 
+
+    logging.info(f"Eval directory: {args.eval_dir}")
+    logging.info(f"COCO annotation path: {args.coco_path}")
+    logging.info(f"Image ID key: {args.image_id_key}")
+    logging.info(f"Caption key: {args.caption_key}")
+    logging.info(f"Cache file: {args.cache}")
+    logging.info(f"Save path: {args.save_path}")    
+
     if os.path.exists(args.cache):
         with open(args.cache, 'rb') as f:
             evaluator = pickle.load(f)
@@ -538,7 +555,7 @@ def main():
         eval_files = [args.cap_file]
 
     for file in eval_files:
-        print(f"Evaluating: {file}")
+        logging.info(f"Evaluating: {file}")
         results = evaluator.compute_chair(
             file, args.image_id_key, args.caption_key)
 
