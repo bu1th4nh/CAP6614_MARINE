@@ -551,13 +551,17 @@ def main():
     else:
         eval_files = [args.cap_file]
 
-    for file in eval_files:
-        logging.info(f"Evaluating: {file}")
-        results = evaluator.compute_chair(
-            file, args.image_id_key, args.caption_key)
+    for file in tqdm(eval_files, desc=f"Evaluating {len(eval_files)} files in {args.eval_dir}"):
+        try:
+            logging.info(f"Evaluating: {file}")
+            results = evaluator.compute_chair(
+                file, args.image_id_key, args.caption_key)
 
-        save_results(results, args.save_path, file)
-        print_metrics(results)
+            save_results(results, args.save_path, file)
+            print_metrics(results)
+        except Exception as e:
+            logging.error(f"Error evaluating file {file}: {e}", exc_info=True)
+            continue
 
 if __name__ == '__main__':
     main()
