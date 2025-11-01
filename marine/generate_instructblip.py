@@ -57,11 +57,20 @@ def eval_model(args):
     ans_file = open(answers_file, "w")
 
     dataset = COCOEvalDataset(questions, args.image_folder, processor, tokenizer, args.conv_mode, getattr(model.config, 'mm_use_im_start_end', False))
-    eval_dataloader = DataLoader(
-        dataset, batch_size=args.batch_size, shuffle=False, collate_fn=custom_collate_fn)
+    eval_dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, collate_fn=custom_collate_fn)
 
     # generate
-    for prompts, question_ids, img_ids, input_ids, guidance_ids, images, guidance_images, attention_masks, guidance_attention_masks in tqdm(eval_dataloader, desc="Evaluating", total=len(eval_dataloader)):
+    for (
+        prompts, 
+        question_ids, 
+        img_ids, 
+        input_ids, 
+        guidance_ids, 
+        images, 
+        guidance_images, 
+        attention_masks, 
+        guidance_attention_masks
+    ) in tqdm(eval_dataloader, desc="Evaluating", total=len(eval_dataloader)):
 
         logging.info(f"Processing batch with question_ids: {question_ids}, img_ids: {img_ids}")
         logging.info(f"Input IDs shape: {input_ids.shape}, Guidance IDs shape: {guidance_ids.shape}, Images shape: {images.shape}, Guidance Images shape: {guidance_images.shape}, Attention Masks shape: {attention_masks.shape}, Guidance Attention Masks shape: {guidance_attention_masks.shape}")
@@ -70,11 +79,10 @@ def eval_model(args):
             if args.guidance_strength == 0:
                 logging.info("Generating without guidance...")
                 output_ids = model.generate(
+                    input_ids,
                     pixel_values=images,
-                    input_ids=input_ids,
                     do_sample=args.sampling,
                     temperature=args.temperature,
-                    attention_mask=attention_masks,
                     top_p=args.top_p,
                     max_new_tokens=args.max_new_tokens,
                     use_cache=True
@@ -82,8 +90,8 @@ def eval_model(args):
             else:
                 logging.info(f"Generating with guidance strength {args.guidance_strength}...")
                 output_ids = model.generate(
+                    input_ids,
                     pixel_values=images,
-                    input_ids=input_ids,
                     do_sample=args.sampling,
                     temperature=args.temperature,
                     top_p=args.top_p,
@@ -106,11 +114,10 @@ def eval_model(args):
         decoded_outputs = tokenizer.batch_decode(
             output_ids[:, input_token_len:], skip_special_tokens=True)
 
-        for i, output in enumerate(decoded_outputs):
-
+        for i, output in tqdm(enumerate(decoded_outputs), total=len(decoded_outputs), desc="Processing outputs"):
             # Process each output
             output = output.strip()
-            logging.info(f"{question_ids[i]}: {output}")
+            # logging.info(f"{question_ids[i]}: {output}")
 
             # Generate answer ID and write to file
             ans_id = shortuuid.uuid()

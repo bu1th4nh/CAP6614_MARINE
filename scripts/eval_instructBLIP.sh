@@ -2,7 +2,7 @@
 export PYTHONPATH=$PYTHONPATH:/home/ti514716/Pretrained/llava2
 
 MODEL_NAME="instructblip"
-MODEL_VERSION="Salesforce/instructblip-flan-t5-xl"
+MODEL_VERSION="Salesforce/instructblip-vicuna-7b"
 BATCH_SIZE=24
 SEED=242
 
