@@ -11,7 +11,7 @@ import torch
 import os
 import json
 import shortuuid
-
+from tqdm import tqdm
 
 from torch.utils.data import DataLoader
 from transformers import LogitsProcessorList
@@ -60,7 +60,7 @@ def eval_model(args):
         dataset, batch_size=args.batch_size, shuffle=False, collate_fn=custom_collate_fn)
 
     # generate
-    for prompts, question_ids, img_ids, input_ids, guidance_ids, images, guidance_images, attention_masks, guidance_attention_masks in eval_dataloader:
+    for prompts, question_ids, img_ids, input_ids, guidance_ids, images, guidance_images, attention_masks, guidance_attention_masks in tqdm(eval_dataloader, desc="Evaluating", total=len(eval_dataloader)):
 
         logging.info(f"Processing batch with question_ids: {question_ids}, img_ids: {img_ids}")
         logging.info(f"Input IDs shape: {input_ids.shape}, Guidance IDs shape: {guidance_ids.shape}, Images shape: {images.shape}, Guidance Images shape: {guidance_images.shape}, Attention Masks shape: {attention_masks.shape}, Guidance Attention Masks shape: {guidance_attention_masks.shape}")
