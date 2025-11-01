@@ -24,7 +24,7 @@ def load_model(model_name: str, model_path: str):
     elif model_name == "instructblip-vicuna-7b":
         from transformers import InstructBlipProcessor, InstructBlipForConditionalGeneration
 
-        model = InstructBlipForConditionalGeneration.from_pretrained(model_path).cuda()
+        model = InstructBlipForConditionalGeneration.from_pretrained(model_path, return_dict=False).cuda()
         processor = InstructBlipProcessor.from_pretrained(model_path)
         tokenizer = processor.tokenizer
 
