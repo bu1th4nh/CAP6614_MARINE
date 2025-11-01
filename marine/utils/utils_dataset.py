@@ -6,6 +6,8 @@ from torch.utils.data import Dataset
 from torch.nn.utils.rnn import pad_sequence
 from PIL import Image
 
+from copy import deepcopy
+
 from llava.constants import DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
 from llava.conversation import conv_templates
 
@@ -172,9 +174,9 @@ def custom_collate_instructblip(batch: List[Tuple[
         seq_list = [seq.squeeze(0).flip(dims=[0]) for seq in seq_list]
         return pad_sequence(seq_list, batch_first=True, padding_value=0).flip(dims=[1])
 
-    finished_inputs = inputs.copy()
-    finished_guidance_inputs = guidance_inputs.copy()
-    
+    finished_inputs = deepcopy(inputs)
+    finished_guidance_inputs = deepcopy(guidance_inputs)
+
     finished_inputs["input_ids"] = process_sequence(
         [inp["input_ids"] for inp in inputs]
     ).cuda()
@@ -194,7 +196,7 @@ def custom_collate_instructblip(batch: List[Tuple[
         [g_inp["attention_mask"] for g_inp in guidance_inputs]
     ).cuda()
 
-    
+
     return (
         list(prompts),
         list(question_ids),
