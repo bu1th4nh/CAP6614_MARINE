@@ -3,7 +3,7 @@ export PYTHONPATH=$PYTHONPATH:/home/ti514716/Pretrained/llava2
 
 MODEL_NAME="llava2"
 MODEL_VERSION="llava-hf/llava-1.5-7b-hf"
-BATCH_SIZE=32
+BATCH_SIZE=24
 SEED=242
 
 guidance_strength_lst=(0.0 0.7)
