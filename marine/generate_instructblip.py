@@ -68,8 +68,8 @@ def eval_model(args):
         with torch.inference_mode():
             if args.guidance_strength == 0:
                 output_ids = model.generate(
+                    images,
                     input_ids,
-                    pixel_values=images,
                     do_sample=args.sampling,
                     temperature=args.temperature,
                     top_p=args.top_p,
@@ -78,8 +78,8 @@ def eval_model(args):
                 )
             else:
                 output_ids = model.generate(
+                    images,
                     input_ids,
-                    pixel_values=images,
                     do_sample=args.sampling,
                     temperature=args.temperature,
                     top_p=args.top_p,
