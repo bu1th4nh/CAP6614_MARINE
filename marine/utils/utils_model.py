@@ -21,15 +21,14 @@ def load_model(model_name: str, model_path: str):
 
         return model, tokenizer, processor
 
-    elif model_name == "mplug_owl2":
-        from mplug_owl2.model.builder import load_pretrained_model
+    elif model_name == "instructblip-vicuna-7b":
+        from transformers import InstructBlipProcessor, InstructBlipForConditionalGeneration
 
-        tokenizer, model, image_processor, context_len = load_pretrained_model(
-            model_path, None, model_name, load_8bit=False, load_4bit=False, device="cuda"
-        )
-        model = model.cuda()
+        model = InstructBlipForConditionalGeneration.from_pretrained(model_path).cuda()
+        processor = InstructBlipProcessor.from_pretrained(model_path)
+        tokenizer = processor.tokenizer
 
-        return model, tokenizer, image_processor
-
+        return model, tokenizer, processor
+    
     else:
         raise ValueError(f"Unsupported model name: {model_name}")
