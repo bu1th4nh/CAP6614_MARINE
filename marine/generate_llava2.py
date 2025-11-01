@@ -26,6 +26,13 @@ from marine.utils.utils_model import load_model
 
 def eval_model(args):
 
+    logging.info(f"Evaluating model: {str(args.model_path)}")
+    logging.info(f"Loading questions from {str(args.question_path)} and {str(args.question_file)}...")
+    logging.info(f"Loading images from {str(args.image_folder)}...")
+    logging.info(f"Using conv mode: {args.conv_mode}")
+    logging.info(f"Using num_chunks: {args.num_chunks} and chunk_idx: {args.chunk_idx}")
+    logging.info(f"Using temperature: {args.temperature}, top_p: {args.top_p}, max_new_tokens: {args.max_new_tokens}")
+    logging.info(f"Using seed: {args.seed}, guidance_strength: {args.guidance_strength}, batch_size: {args.batch_size}, sampling: {args.sampling}")
 
 
 
@@ -47,13 +54,6 @@ def eval_model(args):
         os.path.join(args.answer_path, args.answers_file))
     os.makedirs(os.path.dirname(answers_file), exist_ok=True)
     ans_file = open(answers_file, "w")
-
-
-    logging.info(f"Loaded model {model_name}.")
-    
-    logging.info(f"Loaded {len(questions)} questions for evaluation.")
-    logging.info(f"Creating dataset for evaluation with {len(questions)} questions, image folder: {args.image_folder}, model: {model_name}, conv_mode: {args.conv_mode}...")
-
 
     dataset = COCOEvalDataset(questions, args.image_folder, processor, tokenizer, args.conv_mode, getattr(model.config, 'mm_use_im_start_end', False))
     eval_dataloader = DataLoader(

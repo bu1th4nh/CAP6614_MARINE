@@ -29,7 +29,7 @@ for guidance_strength in "${guidance_strength_lst[@]}"; do
             --model_path $MODEL_VERSION \
             --seed $SEED \
             --batch_size $BATCH_SIZE \
-            --image_folder "/home/ti514716/Data/coco/val2014" \
+            --image_folder /home/ti514716/Data/coco/val2014 \
             --temperature 0.6 \
             --top_p 0.9 \
             --max_new_tokens 64
