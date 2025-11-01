@@ -61,34 +61,10 @@ def eval_model(args):
 
     # generate
     for prompts, question_ids, img_ids, input_ids, guidance_ids, images, guidance_images, attention_masks, guidance_attention_masks in eval_dataloader:
+        logging.info(f"Processing batch with question_ids: {question_ids}, img_ids: {img_ids}")
 
-        # Move tensors to model device and create defaults if needed
-        device = next(model.parameters()).device
+        print(f"Input IDs shape: {input_ids.shape}, Guidance IDs shape: {guidance_ids.shape}, Images shape: {images.shape}, Guidance Images shape: {guidance_images.shape}, Attention Masks shape: {attention_masks.shape}, Guidance Attention Masks shape: {guidance_attention_masks.shape}")
 
-        if input_ids is not None:
-            input_ids = input_ids.to(device)
-        else:
-            raise RuntimeError("input_ids is None in batch!")
-
-        if images is not None:
-            images = images.to(device)
-        if guidance_ids is not None:
-            guidance_ids = guidance_ids.to(device)
-        if guidance_images is not None:
-            guidance_images = guidance_images.to(device)
-
-        # Create attention masks if missing
-        if attention_masks is None and input_ids is not None:
-            attention_masks = torch.ones(input_ids.shape, dtype=torch.long, device=device)
-        elif attention_masks is not None:
-            attention_masks = attention_masks.to(device)
-
-        if guidance_attention_masks is None and guidance_ids is not None:
-            guidance_attention_masks = torch.ones(guidance_ids.shape, dtype=torch.long, device=device)
-        elif guidance_attention_masks is not None:
-            guidance_attention_masks = guidance_attention_masks.to(device)
-
-        
         with torch.inference_mode():
             if args.guidance_strength == 0:
                 output_ids = model.generate(
