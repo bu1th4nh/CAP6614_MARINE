@@ -79,7 +79,7 @@ def eval_model(args):
             if args.guidance_strength == 0:
                 logging.info("Generating without guidance...")
                 output_ids = model.generate(
-                    input_ids = input_ids,
+                    input = input_ids,
                     pixel_values=images,
                     do_sample=args.sampling,
                     temperature=args.temperature,
@@ -90,7 +90,7 @@ def eval_model(args):
             else:
                 logging.info(f"Generating with guidance strength {args.guidance_strength}...")
                 output_ids = model.generate(
-                    input_ids = input_ids,
+                    input = input_ids,
                     pixel_values=images,
                     do_sample=args.sampling,
                     temperature=args.temperature,
