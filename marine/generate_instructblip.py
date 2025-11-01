@@ -60,39 +60,59 @@ def eval_model(args):
         dataset, batch_size=args.batch_size, shuffle=False, collate_fn=custom_collate_fn)
 
     # generate
-    for prompts, question_ids, img_ids, input_ids, guidance_ids, images, guidance_images, attention_masks, guidance_attention_masks in tqdm(eval_dataloader, desc="Evaluating", total=len(eval_dataloader)):
+    for (
+        prompts, 
+        question_ids, 
+        img_ids, 
+        input_ids, 
+        guidance_ids, 
+        images, 
+        guidance_images,
+        attention_masks, 
+        guidance_attention_masks
+    ) in tqdm(eval_dataloader, desc="Evaluating", total=len(eval_dataloader)):
 
-        logging.info(f"Processing batch with question_ids: {question_ids}, img_ids: {img_ids}")
-        logging.info(f"Input IDs shape: {input_ids.shape}, Guidance IDs shape: {guidance_ids.shape}, Images shape: {images.shape}, Guidance Images shape: {guidance_images.shape}, Attention Masks shape: {attention_masks.shape}, Guidance Attention Masks shape: {guidance_attention_masks.shape}")
+        # --- Sanity checks (help catch the gather OOB cause) ---
+        vocab = model.get_input_embeddings().weight.shape[0]
+        assert input_ids.dtype == torch.long and guidance_ids.dtype == torch.long
+        assert input_ids.min().item() >= 0 and guidance_ids.min().item() >= 0
+        assert input_ids.max().item() < vocab, f"input_ids max {input_ids.max().item()} >= vocab {vocab}"
+        assert guidance_ids.max().item() < vocab, f"guidance_ids max {guidance_ids.max().item()} >= vocab {vocab}"
+        assert attention_masks.shape == input_ids.shape
+        assert guidance_attention_masks.shape == guidance_ids.shape
 
         with torch.inference_mode():
+            gen_kwargs = dict(
+                do_sample=args.sampling,
+                temperature=args.temperature,
+                top_p=args.top_p,
+                max_new_tokens=args.max_new_tokens,
+                use_cache=True,
+            )
+
             if args.guidance_strength == 0:
                 output_ids = model.generate(
-                    images,
-                    input_ids,
-                    do_sample=args.sampling,
-                    temperature=args.temperature,
-                    top_p=args.top_p,
-                    max_new_tokens=args.max_new_tokens,
-                    use_cache=True
+                    pixel_values=images,             # <-- keyword
+                    input_ids=input_ids,             # <-- keyword
+                    attention_mask=attention_masks,  # good practice
+                    **gen_kwargs
                 )
             else:
                 output_ids = model.generate(
-                    images,
-                    input_ids,
-                    do_sample=args.sampling,
-                    temperature=args.temperature,
-                    top_p=args.top_p,
-                    max_new_tokens=args.max_new_tokens,
-                    use_cache=True,
+                    pixel_values=images,
+                    input_ids=input_ids,
+                    attention_mask=attention_masks,
                     logits_processor=LogitsProcessorList([
-                        GuidanceLogits(guidance_strength=args.guidance_strength,
-                                  guidance=guidance_ids,
-                                  images=guidance_images,
-                                  attention_mask=guidance_attention_masks,
-                                  model=model,
-                                  tokenizer=tokenizer),
-                    ])
+                        GuidanceLogits(
+                            guidance_strength=args.guidance_strength,
+                            guidance=guidance_ids,                     # token ids for guidance TEXT
+                            images=guidance_images,                    # images for guidance branch
+                            attention_mask=guidance_attention_masks,   # mask for guidance ids
+                            model=model,
+                            tokenizer=tokenizer,
+                        ),
+                    ]),
+                    **gen_kwargs
                 )
 
         input_token_len = input_ids.shape[1]
