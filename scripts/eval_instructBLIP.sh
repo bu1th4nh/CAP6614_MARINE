@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# export PYTHONPATH=$PYTHONPATH:/home/ti514716/Pretrained/llava2
+export PYTHONPATH=$PYTHONPATH:/home/ti514716/Pretrained/llava2
 
 MODEL_NAME="instructblip"
 MODEL_VERSION="Salesforce/instructblip-vicuna-7b"
