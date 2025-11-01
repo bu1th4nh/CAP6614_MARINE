@@ -511,10 +511,10 @@ def save_file_check(args):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--eval_dir', required=True)
-    parser.add_argument('--coco_path', default='./data/coco/annotations')
+    parser.add_argument('--coco_path', default='/home/ti514716/Data/coco/annotations')
     parser.add_argument('--image_id_key', default='image_id')
     parser.add_argument('--caption_key', default='text')
-    parser.add_argument('--cache', default='./data/coco/chair_cache.pkl')
+    parser.add_argument('--cache', default='/home/ti514716/Data/coco/chair_cache.pkl')
     parser.add_argument('--save_path', default='chair_eval.json')
     args = parser.parse_args()
 
