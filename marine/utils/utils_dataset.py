@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import Dataset
 from torch.nn.utils.rnn import pad_sequence
 from PIL import Image
-
+import logging
 from copy import deepcopy
 
 from llava.constants import DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
@@ -138,6 +138,8 @@ def custom_collate_fn(batch: List[Tuple[
     attn_mask_batch = process_sequence(attention_masks_list).cuda()
     guidance_attn_mask_batch = process_sequence(guidance_attention_masks_list).cuda()
 
+
+
     return (
         list(prompts),
         list(question_ids),
@@ -162,6 +164,8 @@ def custom_collate_instructblip(batch: List[Tuple[
     Custom collate function to pad input/guidance_ids and attention masks,
     and stack image tensors. All outputs are moved to CUDA.
     """
+
+
     (
         prompts,
         question_ids,
@@ -170,12 +174,17 @@ def custom_collate_instructblip(batch: List[Tuple[
         guidance_inputs
     ) = zip(*batch)
 
+    logging.fatal(str(type(inputs)))
+    logging.fatal(str(type(guidance_inputs)))
+
+    print()
+
     def process_sequence(seq_list):
         seq_list = [seq.squeeze(0).flip(dims=[0]) for seq in seq_list]
         return pad_sequence(seq_list, batch_first=True, padding_value=0).flip(dims=[1])
 
-    finished_inputs = deepcopy(inputs)
-    finished_guidance_inputs = deepcopy(guidance_inputs)
+    finished_inputs = inputs
+    finished_guidance_inputs = guidance_inputs
 
     finished_inputs["input_ids"] = process_sequence(
         [inp["input_ids"] for inp in inputs]
