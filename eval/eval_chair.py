@@ -264,7 +264,7 @@ class CHAIR(object):
         for cat in coco_segments['categories']:
             id_to_name[cat['id']] = cat['name']
 
-        for i, annotation in tqdm(enumerate(segment_annotations), desc=f"Getting annotations for {len(segment_annotations)} segmentation annotations"):
+        for i, annotation in tqdm(enumerate(segment_annotations), desc=f"Getting annotations for segmentation annotations"):
             imid = annotation['image_id']
 
             node_word = self.inverse_synonym_dict[id_to_name[annotation['category_id']]]
@@ -279,7 +279,7 @@ class CHAIR(object):
         coco_caps = combine_coco_captions(self.coco_path)
         caption_annotations = coco_caps['annotations']
 
-        for i, annotation in tqdm(enumerate(caption_annotations), desc=f"Getting annotations for {len(caption_annotations)} ground truth captions"):
+        for i, annotation in tqdm(enumerate(caption_annotations), desc=f"Getting annotations for ground truth captions"):
             imid = annotation['image_id']
 
             _, node_words, _, _ = self.caption_to_words(annotation['caption'])
