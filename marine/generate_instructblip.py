@@ -98,17 +98,17 @@ def eval_model(args):
         
 
 
-        logging.info(f"input_ids shape: {input_ids.shape}")
-        logging.info(f"input_images shape: {input_images.shape}")
-        logging.info(f"input_attention_masks shape: {input_attention_masks.shape}")
-        logging.info(f"input_qformer_input_ids shape: {input_qformer_input_ids.shape if input_qformer_input_ids is not None else None}")
-        logging.info(f"input_qformer_attention_mask shape: {input_qformer_attention_mask.shape if input_qformer_attention_mask is not None else None}")
+        logging.info(f"input_ids shape: {input_ids.shape}, device: {input_ids.device}")
+        logging.info(f"input_images shape: {input_images.shape}, device: {input_images.device}")
+        logging.info(f"input_attention_masks shape: {input_attention_masks.shape}, device: {input_attention_masks.device}")
+        logging.info(f"input_qformer_input_ids shape: {input_qformer_input_ids.shape if input_qformer_input_ids is not None else None}, device: {input_qformer_input_ids.device if input_qformer_input_ids is not None else None}")
+        logging.info(f"input_qformer_attention_mask shape: {input_qformer_attention_mask.shape if input_qformer_attention_mask is not None else None}, device: {input_qformer_attention_mask.device if input_qformer_attention_mask is not None else None}")
 
-        logging.info(f"guidance_ids shape: {guidance_ids.shape}")
-        logging.info(f"guidance_images shape: {guidance_images.shape}")
-        logging.info(f"guidance_attention_masks shape: {guidance_attention_masks.shape}")
-        logging.info(f"guidance_qformer_input_ids shape: {guidance_qformer_input_ids.shape if guidance_qformer_input_ids is not None else None}")
-        logging.info(f"guidance_qformer_attention_mask shape: {guidance_qformer_attention_mask.shape if guidance_qformer_attention_mask is not None else None}")
+        logging.info(f"guidance_ids shape: {guidance_ids.shape}, device: {guidance_ids.device}")
+        logging.info(f"guidance_images shape: {guidance_images.shape}, device: {guidance_images.device}")
+        logging.info(f"guidance_attention_masks shape: {guidance_attention_masks.shape}, device: {guidance_attention_masks.device}")
+        logging.info(f"guidance_qformer_input_ids shape: {guidance_qformer_input_ids.shape if guidance_qformer_input_ids is not None else None}, device: {guidance_qformer_input_ids.device if guidance_qformer_input_ids is not None else None}")
+        logging.info(f"guidance_qformer_attention_mask shape: {guidance_qformer_attention_mask.shape if guidance_qformer_attention_mask is not None else None}, device: {guidance_qformer_attention_mask.device if guidance_qformer_attention_mask is not None else None}")
 
 
 
@@ -124,7 +124,8 @@ def eval_model(args):
                     temperature=args.temperature,
                     top_p=args.top_p,
                     max_new_tokens=args.max_new_tokens,
-                    use_cache=True
+                    use_cache=True,
+                    repetition_penalty=1.1,
                 )
             else:
                 output_ids = model.generate(
@@ -138,6 +139,7 @@ def eval_model(args):
                     top_p=args.top_p,
                     max_new_tokens=args.max_new_tokens,
                     use_cache=True,
+                    repetition_penalty=1.1,
                     logits_processor=LogitsProcessorList([
                         GuidanceLogits(guidance_strength=args.guidance_strength,
                                 guidance=guidance_ids,
