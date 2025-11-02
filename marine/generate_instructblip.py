@@ -81,8 +81,9 @@ def eval_model(args):
             if args.guidance_strength == 0:
                 output_ids = model.generate(
                     **inputs,
+                    do_sample=False,
                     num_beams=5,
-                    max_new_tokens=256,
+                    max_length=256,
                     min_length=1,
                     top_p=0.9,
                     repetition_penalty=1.5,
@@ -92,8 +93,9 @@ def eval_model(args):
             else:
                 output_ids = model.generate(
                     **inputs,
+                    do_sample=False,
                     num_beams=5,
-                    max_new_tokens=256,
+                    max_length=256,
                     min_length=1,
                     top_p=0.9,
                     repetition_penalty=1.5,
