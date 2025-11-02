@@ -99,7 +99,7 @@ def eval_model(args):
                     # pixel_values=images,
                     # input_ids=input_ids,
     
-                    **inputs
+                    **inputs,
                     do_sample=args.sampling,
                     temperature=args.temperature,
                     top_p=args.top_p,
