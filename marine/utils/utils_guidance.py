@@ -1,5 +1,6 @@
 from transformers import (LogitsProcessor)
 import torch.nn.functional as F
+import logging
 
 class GuidanceLogits(LogitsProcessor):
 
@@ -59,8 +60,10 @@ class GuidanceLogits(LogitsProcessor):
         else:
             guidance_logits = F.log_softmax(self.out.logits[:,-1:], dim=-1).to(logits.device)
             guidance_logits = guidance_logits.squeeze(1)
+        logging.fatal(f"Guidance logits shape: {guidance_logits.shape}, Original logits shape: {logits.shape}, Output logits shape: {out.shape}")
 
         out = self.guidance_strength * (guidance_logits - logits) + logits
         out = F.log_softmax(out, dim=-1)
+
 
         return out
