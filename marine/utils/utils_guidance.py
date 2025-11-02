@@ -50,18 +50,18 @@ class GuidanceLogits(LogitsProcessor):
                     past_key_values=self.out.past_key_values,
                 )
 
-        # Ensure guidance_logits matches the shape of logits
         if len(self.out.logits) == 1:
-            # self.out.logits[0] shape: (seq_len, vocab_size)
-            # Take the last token for each batch
-            guidance_logits = F.log_softmax(self.out.logits[0][-1], dim=-1).unsqueeze(0).expand(logits.size(0), -1)
+            guidance_logits = F.log_softmax(self.out.logits[0][-1:], dim=-1)
         else:
-            # self.out.logits shape: (batch_size, seq_len, vocab_size)
-            # Take the last token for each batch
-            guidance_logits = F.log_softmax(self.out.logits[:, -1, :], dim=-1).to(logits.device)
+            guidance_logits = F.log_softmax(self.out.logits[:,-1:], dim=-1).to(logits.device)
+            guidance_logits = guidance_logits.squeeze(1)
+
+        # Expand guidance_logits to match logits shape
+        if guidance_logits.shape != logits.shape:
+            guidance_logits = guidance_logits.expand_as(logits)
 
         logging.fatal(f"Guidance logits shape: {guidance_logits.shape}, Logits shape: {logits.shape}")
-
+        
 
         out = self.guidance_strength * (guidance_logits - logits) + logits
         out = F.log_softmax(out, dim=-1)
