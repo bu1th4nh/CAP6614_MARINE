@@ -19,7 +19,7 @@ from transformers import LogitsProcessorList
 import logging
 
 from marine.utils.utils import get_chunk, get_answers_file_name, get_model_name_from_path
-from marine.utils.utils_dataset import COCOEvalDataset, custom_collate_fn, dict_collate_fn
+from marine.utils.utils_dataset import *
 from marine.utils.utils_guidance import GuidanceLogits
 from marine.utils.utils_model import load_model
 
@@ -64,7 +64,9 @@ def eval_model(args):
         getattr(model.config, 'mm_use_im_start_end', False)
         # custom_flavor='instructblip'
     )
-    eval_dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, collate_fn=dict_collate_fn)
+
+    collator = Collator(processor, model.device)
+    eval_dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, collate_fn=collator.bypass_collate_fn)
 
     # generate
     for data_batch in tqdm(eval_dataloader, desc="Evaluating", total=len(eval_dataloader)):

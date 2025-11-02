@@ -23,7 +23,7 @@ def load_model(model_name: str, model_path: str):
         from transformers import InstructBlipProcessor, InstructBlipForConditionalGeneration, AutoProcessor
 
         model = InstructBlipForConditionalGeneration.from_pretrained(model_path).cuda()
-        processor = AutoProcessor.from_pretrained(model_path)
+        processor = InstructBlipProcessor.from_pretrained(model_path)
         tokenizer = processor.tokenizer
 
         # Make sure processor carries the model’s num_query_tokens

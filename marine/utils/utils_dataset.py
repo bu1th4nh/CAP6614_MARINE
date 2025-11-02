@@ -109,12 +109,41 @@ class COCOEvalDataset(Dataset):
         }
 
 
+class Collator:
+    def __init__(self, processor, device):
+        self.processor = processor
+        self.device = device
 
-def dict_collate_fn(batch: List[Mapping[str, Any]]):
-    """
-    Collate function to batch a list of dictionaries.
-    """
-    return batch
+    def dict_collate_fn_with_process(self, batch: List[Mapping[str, Any]]):
+        # Metadata
+        prompts = [x["cur_prompt"] for x in batch]
+        question_ids = [x["question_id"] for x in batch]
+        img_ids = [x["img_id"] for x in batch]
+
+        # Prepare inputs
+        global_input_images = [x["image"] for x in batch]
+        input_prompts = [x["full_prompt"] for x in batch]
+        guidance_prompts = [x["full_prompt_neg"] for x in batch]
+        
+        inputs = self.processor(text=input_prompts, images=global_input_images, return_tensors="pt", padding=True, truncation=False)
+        guidance_inputs = self.processor(text=guidance_prompts, images=global_input_images, return_tensors="pt", padding=True, truncation=False)
+
+
+        inputs = {k: v.to(self.device, non_blocking=True) for k,v in inputs.items()}
+        guidance_inputs = {k: v.to(self.device, non_blocking=True) for k,v in guidance_inputs.items()}
+
+        return {
+            "prompts": list(prompts),
+            "question_ids": list(question_ids),
+            "img_ids": list(img_ids),
+            "inputs": inputs,
+            "guidance_inputs": guidance_inputs
+        }
+    
+
+    def bypass_collate_fn(self, batch: List[Mapping[str, Any]]):
+        return batch
+
 
 
 def custom_collate_fn(batch: List[Tuple[
