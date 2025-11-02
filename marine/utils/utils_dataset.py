@@ -125,11 +125,8 @@ class Collator:
         input_prompts = [x["full_prompt"] for x in batch]
         guidance_prompts = [x["full_prompt_neg"] for x in batch]
 
-
-        for img in global_input_images: logging.fatal(f"{img.size}, {img.mode}")
-        for prompt in input_prompts: logging.fatal(prompt)
-        for gprompt in guidance_prompts: logging.fatal(gprompt)
-
+        input_prompts = ["What's in this image?" for x in batch]
+        guidance_prompts = ["Describe this image in detail." for x in batch]
         
         inputs = self.processor(
             images=global_input_images, 
@@ -146,7 +143,7 @@ class Collator:
             padding=True,
         ).to(self.device)
 
-        logging.fatal(inputs)
+
         return {
             "prompts": list(prompts),
             "question_ids": list(question_ids),
