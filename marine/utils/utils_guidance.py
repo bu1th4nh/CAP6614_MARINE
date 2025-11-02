@@ -18,6 +18,7 @@ class GuidanceLogits(LogitsProcessor):
         self.guidance = guidance_inputs["input_ids"]
         self.images = guidance_inputs["pixel_values"]
         self.attention_mask = guidance_inputs["attention_mask"]
+        self.tokenizer = tokenizer
         self.model = model
         self.out = None
         
@@ -49,17 +50,22 @@ class GuidanceLogits(LogitsProcessor):
                     past_key_values=self.out.past_key_values,
                 )
 
+        # Ensure guidance_logits matches the shape of logits
         if len(self.out.logits) == 1:
-            guidance_logits = F.log_softmax(self.out.logits[0][-1:], dim=-1)
+            # self.out.logits[0] shape: (seq_len, vocab_size)
+            # Take the last token for each batch
+            guidance_logits = F.log_softmax(self.out.logits[0][-1], dim=-1).unsqueeze(0).expand(logits.size(0), -1)
         else:
-            guidance_logits = F.log_softmax(self.out.logits[:,-1:], dim=-1).to(logits.device)
-            guidance_logits = guidance_logits.squeeze(1)
+            # self.out.logits shape: (batch_size, seq_len, vocab_size)
+            # Take the last token for each batch
+            guidance_logits = F.log_softmax(self.out.logits[:, -1, :], dim=-1).to(logits.device)
 
         logging.fatal(f"Guidance logits shape: {guidance_logits.shape}, Logits shape: {logits.shape}")
+
 
         out = self.guidance_strength * (guidance_logits - logits) + logits
         out = F.log_softmax(out, dim=-1)
 
-        logging.fatal(f"Output logits shape: {out.shape}")
+
 
         return out
