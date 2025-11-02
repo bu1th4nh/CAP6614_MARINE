@@ -140,11 +140,14 @@ def eval_model(args):
                     use_cache=True,
                     logits_processor=LogitsProcessorList([
                         GuidanceLogits(guidance_strength=args.guidance_strength,
-                                  guidance=guidance_ids,
-                                  images=guidance_images,
-                                  attention_mask=guidance_attention_masks,
-                                  model=model,
-                                  tokenizer=tokenizer),
+                                guidance=guidance_ids,
+                                images=guidance_images,
+                                attention_mask=guidance_attention_masks,
+                                model=model,
+                                tokenizer=tokenizer,
+                                qformer_input_ids=guidance_qformer_input_ids,
+                                qformer_attention_mask=guidance_qformer_attention_mask
+                        ),
                     ])
                 )
 
@@ -157,7 +160,7 @@ def eval_model(args):
         for i, output in tqdm(enumerate(decoded_outputs), total=len(decoded_outputs), desc="Processing outputs"):
             # Process each output
             output = output.strip()
-            # logging.info(f"{question_ids[i]}: {output}")
+            logging.info(f"{question_ids[i]}: {output}")
 
             # Generate answer ID and write to file
             ans_id = shortuuid.uuid()

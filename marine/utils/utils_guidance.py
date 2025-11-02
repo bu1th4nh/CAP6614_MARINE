@@ -3,7 +3,7 @@ import torch.nn.functional as F
 
 class GuidanceLogits(LogitsProcessor):
 
-    def __init__(self, guidance_strength, guidance, images, attention_mask, model, tokenizer=None):
+    def __init__(self, guidance_strength, guidance, images, attention_mask, model, tokenizer=None, qformer_input_ids=None, qformer_attention_mask=None):
         """
         Args:
             guidance_strength (float): The guidance strength for the logits.
@@ -19,18 +19,37 @@ class GuidanceLogits(LogitsProcessor):
         self.model = model
         self.out = None
         self.tokenizer = tokenizer
+        self.qformer_input_ids = qformer_input_ids
+        self.qformer_attention_mask = qformer_attention_mask
 
     def __call__(self, input_ids, logits):
         logits = F.log_softmax(logits, dim=-1)
         if self.out is None:
-            self.out = self.model(input_ids=self.guidance, 
-                                  pixel_values=self.images, 
-                                  attention_mask=self.attention_mask,
-                                  use_cache=True)
+            if self.qformer_input_ids is not None and self.qformer_attention_mask is not None:
+                self.out = self.model(input_ids=self.guidance, 
+                                pixel_values=self.images, 
+                                attention_mask=self.attention_mask,
+                                qformer_input_ids=self.qformer_input_ids,
+                                qformer_attention_mask=self.qformer_attention_mask,
+                                use_cache=True)
+            else:
+                self.out = self.model(input_ids=self.guidance, 
+                                pixel_values=self.images, 
+                                attention_mask=self.attention_mask,
+                                use_cache=True)
         else:
-            self.out = self.model(input_ids[:, -1:],
-                                  use_cache=True,
-                                  past_key_values=self.out.past_key_values)
+            if self.qformer_input_ids is not None and self.qformer_attention_mask is not None:
+                self.out = self.model(input_ids[:, -1:],
+                                pixel_values=self.images,
+                                attention_mask=self.attention_mask,
+                                qformer_input_ids=self.qformer_input_ids,
+                                qformer_attention_mask=self.qformer_attention_mask,
+                                use_cache=True,
+                                past_key_values=self.out.past_key_values)
+            else:
+                self.out = self.model(input_ids[:, -1:],
+                                use_cache=True,
+                                past_key_values=self.out.past_key_values)
 
         if len(self.out.logits) == 1:
             guidance_logits = F.log_softmax(self.out.logits[0][-1:], dim=-1)
