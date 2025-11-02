@@ -122,10 +122,12 @@ def custom_collate_fn(batch: List[Tuple[
 
     
     input_ids_list = [inp["input_ids"] for inp in inputs_list]
-    guidance_ids_list = [g_inp["input_ids"] for g_inp in guidance_inputs_list]  
-    image_tensors = [inp["pixel_values"] for inp in inputs_list]
-    guidance_image_tensors = [g_inp["pixel_values"] for g_inp in guidance_inputs_list]
+    image_tensors = [inp["pixel_values"].squeeze(0) for inp in inputs_list]
     attention_masks_list = [inp["attention_mask"] for inp in inputs_list]
+
+    
+    guidance_ids_list = [g_inp["input_ids"] for g_inp in guidance_inputs_list]  
+    guidance_image_tensors = [g_inp["pixel_values"].squeeze(0) for g_inp in guidance_inputs_list]
     guidance_attention_masks_list = [g_inp["attention_mask"] for g_inp in guidance_inputs_list]
 
 
