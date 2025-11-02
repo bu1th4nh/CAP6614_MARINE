@@ -98,6 +98,19 @@ def eval_model(args):
         
 
 
+        logging.info(f"input_ids shape: {input_ids.shape}")
+        logging.info(f"input_images shape: {input_images.shape}")
+        logging.info(f"input_attention_masks shape: {input_attention_masks.shape}")
+        logging.info(f"input_qformer_input_ids shape: {input_qformer_input_ids.shape if input_qformer_input_ids is not None else None}")
+        logging.info(f"input_qformer_attention_mask shape: {input_qformer_attention_mask.shape if input_qformer_attention_mask is not None else None}")
+
+        logging.info(f"guidance_ids shape: {guidance_ids.shape}")
+        logging.info(f"guidance_images shape: {guidance_images.shape}")
+        logging.info(f"guidance_attention_masks shape: {guidance_attention_masks.shape}")
+        logging.info(f"guidance_qformer_input_ids shape: {guidance_qformer_input_ids.shape if guidance_qformer_input_ids is not None else None}")
+        logging.info(f"guidance_qformer_attention_mask shape: {guidance_qformer_attention_mask.shape if guidance_qformer_attention_mask is not None else None}")
+
+
 
         with torch.inference_mode():
             if args.guidance_strength == 0:

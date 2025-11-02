@@ -86,8 +86,8 @@ class COCOEvalDataset(Dataset):
         guidance_inputs = self.processor(text=full_prompt_neg, images=image, return_tensors="pt")
 
 
-        logging.fatal(f"Type of inputs: {type(inputs)}")
-        logging.fatal(f"Input keys: {list(inputs.keys())}")
+        # logging.fatal(f"Type of inputs: {type(inputs)}")
+        # logging.fatal(f"Input keys: {list(inputs.keys())}")
 
     
         return (
