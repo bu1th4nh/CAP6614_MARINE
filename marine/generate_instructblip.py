@@ -1,5 +1,7 @@
+from datetime import datetime
 import os
 import sys
+import traceback
 sys.path.append(os.getcwd())
 from log_config import initialize_logging
 
@@ -22,6 +24,76 @@ from marine.utils.utils import get_chunk, get_answers_file_name, get_model_name_
 from marine.utils.utils_dataset import *
 from marine.utils.utils_guidance import GuidanceLogits
 from marine.utils.utils_model import load_model
+
+
+# -----------------------------------------------------------------------------------------------
+# General Configurations
+# -----------------------------------------------------------------------------------------------
+import mlflow
+import pymongo
+import requests
+from s3fs import S3FileSystem
+from log_config import initialize_logging
+initialize_logging()
+S3_ENDPOINT_URL       = os.environ["S3_ENDPOINT_URL"]
+S3_ACCESS_KEY_ID      = os.environ["S3_ACCESS_KEY_ID"]
+S3_SECRET_ACCESS_KEY  = os.environ["S3_SECRET_ACCESS_KEY"]
+MONGO_ENDPOINT        = os.environ["MONGO_ENDPOINT"]
+MONGO_PORT            = os.environ["MONGO_PORT"]
+MONGO_USERNAME        = os.environ["MONGO_USERNAME"]
+MONGO_PASSWORD        = os.environ["MONGO_PASSWORD"]
+N8N_ENDPOINT_URL      = os.environ["N8N_ENDPOINT_URL"]
+N8N_WEBHOOK_ID        = os.environ["N8N_WEBHOOK_ID"]
+
+mongo = pymongo.MongoClient(
+    host=MONGO_ENDPOINT,
+    port=MONGO_PORT,
+    username=MONGO_USERNAME,
+    password=MONGO_PASSWORD,
+)
+s3 = S3FileSystem(
+    anon=False, 
+    endpoint_url=S3_ENDPOINT_URL,
+    key=S3_ACCESS_KEY_ID,
+    secret=S3_SECRET_ACCESS_KEY,
+    use_ssl=False
+)
+storage_options = {
+    'key': S3_ACCESS_KEY_ID,
+    'secret': S3_SECRET_ACCESS_KEY,
+    'endpoint_url': S3_ENDPOINT_URL,
+}
+
+
+    
+
+
+def report_message_to_n8n(message: str, msg_type: str = "info"):
+    try:
+        response = requests.post(
+            f"{N8N_ENDPOINT_URL}/{N8N_WEBHOOK_ID}",
+            json={"message": message, "type": msg_type}
+        )
+        if response.status_code == 200:
+            logging.info("Successfully reported message to n8n.")
+        else:
+            logging.error(f"Failed to report message to n8n. Status code: {response.status_code}")
+    except Exception as e:
+        logging.error(f"Exception occurred while reporting message to n8n: {e}")
+
+def put_file_to_s3(local_path: str, s3_path: str):
+    try:
+        s3.put(local_path, s3_path)
+        logging.info(f"Successfully uploaded {local_path} to {s3_path}.")
+    except Exception as e:
+        logging.error(f"Failed to upload {local_path} to {s3_path}. Exception: {e}")
+
+
+if "debug" in N8N_WEBHOOK_ID:
+    logging.warning("Debug webhook detected.")
+    report_message_to_n8n("Test!", msg_type="info")
+# -----------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------
 
 
 def eval_model(args):
@@ -84,7 +156,7 @@ def eval_model(args):
                     do_sample=False,
                     num_beams=1,
                     num_return_sequences=1,
-                    max_length=256,
+                    max_length=64,
                     min_length=1,
                     top_p=0.9,
                     repetition_penalty=1.5,
@@ -96,7 +168,7 @@ def eval_model(args):
                     **inputs,
                     do_sample=False,
                     num_beams=1,
-                    max_length=256,
+                    max_length=64,
                     min_length=1,
                     num_return_sequences=1,
                     top_p=0.9,
@@ -136,6 +208,8 @@ def eval_model(args):
 
         ans_file.flush()
     ans_file.close()
+
+    put_file_to_s3(answers_file, f"s3://results/CAP6614_MARINE/answers/instructblip/{os.path.basename(answers_file)}")
     logging.info(f"Done! Saved answers to {answers_file}")
 
 
@@ -165,4 +239,21 @@ if __name__ == "__main__":
     from transformers import set_seed
     set_seed(args.seed)
 
-    eval_model(args)
+    try:
+        report_message_to_n8n(f"Starting InstructBLIP inference with guidance strength {args.guidance_strength} on questions from {args.question_file} to generate answers to {args.answers_file}.")
+        eval_model(args)
+    except Exception as e:
+        logging.error(f"Error during run: {e}. Traceback: {traceback.format_exc()}")
+
+        error_log_collection = mongo['LOGS']['CAP6614_MARINE'].insert_one({
+            'timestamp': datetime.now(),
+            'model_path': args.model_path,
+            'question_file': args.question_file,
+            'answers_file': args.answers_file,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        })
+        logging.info(f"Error logged with id: {error_log_collection.inserted_id}")
+        report_message_to_n8n(f"Exception occurred during InstructBLIP evaluation: {e}", msg_type="error")
+
+

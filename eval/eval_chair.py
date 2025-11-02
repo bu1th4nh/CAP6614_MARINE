@@ -3,18 +3,75 @@ import sys
 import nltk
 import json
 import argparse
+from tqdm import tqdm
 import tqdm as tqdm_lib
 import pickle
+from s3fs import S3FileSystem
 from collections import defaultdict
+import pymongo
 
 
-import os
-import sys
-from tqdm import tqdm
-sys.path.append(os.getcwd())
+
+# -----------------------------------------------------------------------------------------------
+# General Configurations
+# -----------------------------------------------------------------------------------------------
 from log_config import initialize_logging
-
+import requests
 initialize_logging()
+S3_ENDPOINT_URL       = os.environ["S3_ENDPOINT_URL"]
+S3_ACCESS_KEY_ID      = os.environ["S3_ACCESS_KEY_ID"]
+S3_SECRET_ACCESS_KEY  = os.environ["S3_SECRET_ACCESS_KEY"]
+MONGO_ENDPOINT        = os.environ["MONGO_ENDPOINT"]
+MONGO_PORT            = os.environ["MONGO_PORT"]
+MONGO_USERNAME        = os.environ["MONGO_USERNAME"]
+MONGO_PASSWORD        = os.environ["MONGO_PASSWORD"]
+N8N_ENDPOINT_URL      = os.environ["N8N_ENDPOINT_URL"]
+N8N_WEBHOOK_ID        = os.environ["N8N_WEBHOOK_ID"]
+
+mongo = pymongo.MongoClient(
+    host=MONGO_ENDPOINT,
+    port=MONGO_PORT,
+    username=MONGO_USERNAME,
+    password=MONGO_PASSWORD,
+)
+s3 = S3FileSystem(
+    anon=False, 
+    endpoint_url=S3_ENDPOINT_URL,
+    key=S3_ACCESS_KEY_ID,
+    secret=S3_SECRET_ACCESS_KEY,
+    use_ssl=False
+)
+storage_options = {
+    'key': S3_ACCESS_KEY_ID,
+    'secret': S3_SECRET_ACCESS_KEY,
+    'endpoint_url': S3_ENDPOINT_URL,
+}
+
+
+def report_message_to_n8n(message: str, msg_type: str = "info"):
+    try:
+        response = requests.post(
+            f"{N8N_ENDPOINT_URL}/{N8N_WEBHOOK_ID}",
+            json={"message": message, "type": msg_type}
+        )
+        if response.status_code == 200:
+            logging.info("Successfully reported message to n8n.")
+        else:
+            logging.error(f"Failed to report message to n8n. Status code: {response.status_code}")
+    except Exception as e:
+        logging.error(f"Exception occurred while reporting message to n8n: {e}")
+
+def put_file_to_s3(local_path: str, s3_path: str):
+    try:
+        s3.put(local_path, s3_path)
+        logging.info(f"Successfully uploaded {local_path} to {s3_path}.")
+    except Exception as e:
+        logging.error(f"Failed to upload {local_path} to {s3_path}. Exception: {e}")
+# -----------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------
+
+
+
 
 
 import logging
@@ -483,6 +540,7 @@ def save_results(output, save_dir, cap_file):
     with open(results_file, 'a') as f:
         json.dump(results_dict, f)
         f.write('\n')
+        put_file_to_s3(results_file, f"s3://results/CAP6614_MARINE/evaluation/chair/{os.path.basename(results_file)}")
 
     logging.info(f"== Saving results to {results_file} ==")
 
@@ -525,6 +583,8 @@ def main():
     args = parser.parse_args()
 
 
+    report_message_to_n8n(f"Starting CHAIR evaluation for files in {args.eval_dir}.")
+
     logging.info(f"Eval directory: {args.eval_dir}")
     logging.info(f"COCO annotation path: {args.coco_path}")
     logging.info(f"Image ID key: {args.image_id_key}")
@@ -562,6 +622,8 @@ def main():
         except Exception as e:
             logging.error(f"Error evaluating file {file}: {e}", exc_info=True)
             continue
+
+    report_message_to_n8n(f"Completed CHAIR evaluation for files in {args.eval_dir}.")
 
 if __name__ == '__main__':
     main()
