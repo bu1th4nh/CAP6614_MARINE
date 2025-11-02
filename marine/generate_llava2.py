@@ -60,7 +60,17 @@ def eval_model(args):
         dataset, batch_size=args.batch_size, shuffle=False, collate_fn=custom_collate_fn)
 
     # generate
-    for prompts, question_ids, img_ids, input_ids, guidance_ids, images, guidance_images, attention_masks, guidance_attention_masks in eval_dataloader:
+    for (
+        prompts, 
+        question_ids, 
+        img_ids, 
+        input_ids, 
+        guidance_ids, 
+        images, 
+        guidance_images, 
+        attention_masks, 
+        guidance_attention_masks
+    ) in eval_dataloader:
         
         with torch.inference_mode():
             if args.guidance_strength == 0:

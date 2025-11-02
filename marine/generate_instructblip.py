@@ -62,44 +62,51 @@ def eval_model(args):
         processor, tokenizer, 
         args.conv_mode, 
         getattr(model.config, 'mm_use_im_start_end', False),
-        custom_flavor='instructblip'
+        # custom_flavor='instructblip'
     )
-    eval_dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, collate_fn=None)
+    eval_dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, collate_fn=custom_collate_fn)
 
     # generate
-    for (
-        prompts, 
-        question_ids, 
-        img_ids, 
-        inputs,
-        guidance_inputs
-    ) in tqdm(eval_dataloader, desc="Evaluating", total=len(eval_dataloader)):
-        input_ids                = inputs["input_ids"]
-        guidance_ids             = guidance_inputs["input_ids"]
-        images                   = inputs["pixel_values"]
-        guidance_images          = guidance_inputs["pixel_values"]
-        attention_masks          = inputs["attention_mask"]
-        guidance_attention_masks = guidance_inputs["attention_mask"]
+    for data_batch in tqdm(eval_dataloader, desc="Evaluating", total=len(eval_dataloader)):
 
-        logging.info(f"Processing batch with question_ids: {question_ids}")
-        logging.info(f"Processing batch with img_ids     : {img_ids}")
+        prompts = data_batch["prompts"]
+        question_ids = data_batch["question_ids"]
+        img_ids = data_batch["img_ids"]
 
-        logging.info(f"Input IDs shape                   : {input_ids.shape}") 
-        logging.info(f"Images shape                      : {images.shape}") 
-        logging.info(f"Attention Masks shape             : {attention_masks.shape}") 
+        # input_ids, 
+        # images, 
+        # attention_masks, 
 
-        logging.info(f"Guidance IDs shape                : {guidance_ids.shape}") 
-        logging.info(f"Guidance Images shape             : {guidance_images.shape}") 
-        logging.info(f"Guidance Attention Masks shape    : {guidance_attention_masks.shape}")
+        # guidance_ids, 
+        # guidance_images, 
+        # guidance_attention_masks
+        
+
+        input_ids                         = data_batch["inputs"]["input_ids"]
+        input_images                      = data_batch["inputs"]["pixel_values"]
+        input_attention_masks             = data_batch["inputs"]["attention_mask"]
+        input_qformer_input_ids           = data_batch["inputs"].get("qformer_input_ids", None)
+        input_qformer_attention_mask      = data_batch["inputs"].get("qformer_attention_mask", None)
+
+
+        
+        guidance_ids                      = data_batch["guidance_inputs"]["input_ids"]
+        guidance_images                   = data_batch["guidance_inputs"]["pixel_values"]
+        guidance_attention_masks          = data_batch["guidance_inputs"]["attention_mask"]
+        guidance_qformer_input_ids        = data_batch["guidance_inputs"].get("qformer_input_ids", None)
+        guidance_qformer_attention_mask   = data_batch["guidance_inputs"].get("qformer_attention_mask", None)
+        
+
+
 
         with torch.inference_mode():
             if args.guidance_strength == 0:
-                logging.info("Generating without guidance...")
                 output_ids = model.generate(
-                    # pixel_values=images,
-                    # input_ids=input_ids,
-    
-                    **inputs,
+                    input_ids = input_ids,
+                    pixel_values=input_images,
+                    attention_mask=input_attention_masks,
+                    qformer_input_ids=input_qformer_input_ids,
+                    qformer_attention_mask=input_qformer_attention_mask,
                     do_sample=args.sampling,
                     temperature=args.temperature,
                     top_p=args.top_p,
@@ -107,16 +114,15 @@ def eval_model(args):
                     use_cache=True
                 )
             else:
-                logging.info(f"Generating with guidance strength {args.guidance_strength}...")
                 output_ids = model.generate(
-                    # pixel_values=images,
-                    # input_ids=input_ids,
-
-                    **inputs,
+                    input_ids=input_ids,
+                    pixel_values=input_images,
+                    attention_mask=input_attention_masks,
+                    qformer_input_ids=input_qformer_input_ids,
+                    qformer_attention_mask=input_qformer_attention_mask,
                     do_sample=args.sampling,
                     temperature=args.temperature,
                     top_p=args.top_p,
-                    attention_mask=attention_masks,
                     max_new_tokens=args.max_new_tokens,
                     use_cache=True,
                     logits_processor=LogitsProcessorList([

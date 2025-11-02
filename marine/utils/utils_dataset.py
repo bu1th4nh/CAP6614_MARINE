@@ -34,7 +34,7 @@ class COCOEvalDataset(Dataset):
         tokenizer,
         conv_mode: str,
         mm_use_im_start_end: bool,
-        custom_flavor: str = None
+        # custom_flavor: str = None
     ):
         self.questions = questions
         self.image_dir = image_dir
@@ -42,7 +42,7 @@ class COCOEvalDataset(Dataset):
         self.tokenizer = tokenizer
         self.conv_mode = conv_mode
         self.mm_use_im_start_end = mm_use_im_start_end
-        self.custom_flavor = custom_flavor
+        # self.custom_flavor = custom_flavor
 
     def __len__(self) -> int:
         return len(self.questions)
@@ -88,27 +88,15 @@ class COCOEvalDataset(Dataset):
 
         logging.fatal(f"Type of inputs: {type(inputs)}")
         logging.fatal(f"Input keys: {list(inputs.keys())}")
-        
-        if self.custom_flavor == "instructblip":
-            return (
-                cur_prompt,
-                question_id,
-                img_id,
-                inputs,
-                guidance_inputs
-            )
-        else:
-            return (
-                cur_prompt,
-                question_id,
-                img_id,
-                inputs["input_ids"],
-                guidance_inputs["input_ids"],
-                inputs["pixel_values"],
-                guidance_inputs["pixel_values"],
-                inputs["attention_mask"],
-                guidance_inputs["attention_mask"]
-            )
+
+    
+        return (
+            cur_prompt,
+            question_id,
+            img_id,
+            inputs,
+            guidance_inputs
+        )
 
 
 
@@ -116,12 +104,8 @@ def custom_collate_fn(batch: List[Tuple[
     str,          # cur_prompt
     str,          # question_id
     str,          # img_id
-    torch.Tensor, # input_ids
-    torch.Tensor, # guidance_input_ids
-    torch.Tensor, # image_tensor
-    torch.Tensor, # guidance_image_tensor
-    torch.Tensor, # attention_mask
-    torch.Tensor  # guidance_attention_mask
+    Any,          # inputs
+    Any           # guidance_inputs
 ]]) -> Tuple[torch.Tensor, ...]:
     """
     Custom collate function to pad input/guidance_ids and attention masks,
@@ -131,13 +115,19 @@ def custom_collate_fn(batch: List[Tuple[
         prompts,
         question_ids,
         img_ids,
-        input_ids_list,
-        guidance_ids_list,
-        image_tensors,
-        guidance_image_tensors,
-        attention_masks_list,
-        guidance_attention_masks_list
+        inputs_list, # List of "input", each is a BatchEncoding
+        guidance_inputs_list
     ) = zip(*batch)
+
+
+    
+    input_ids_list = [inp["input_ids"] for inp in inputs_list]
+    guidance_ids_list = [g_inp["input_ids"] for g_inp in guidance_inputs_list]  
+    image_tensors = [inp["pixel_values"] for inp in inputs_list]
+    guidance_image_tensors = [g_inp["pixel_values"] for g_inp in guidance_inputs_list]
+    attention_masks_list = [inp["attention_mask"] for inp in inputs_list]
+    guidance_attention_masks_list = [g_inp["attention_mask"] for g_inp in guidance_inputs_list]
+
 
     def process_sequence(seq_list):
         seq_list = [seq.squeeze(0).flip(dims=[0]) for seq in seq_list]
@@ -152,14 +142,40 @@ def custom_collate_fn(batch: List[Tuple[
     attn_mask_batch = process_sequence(attention_masks_list).cuda()
     guidance_attn_mask_batch = process_sequence(guidance_attention_masks_list).cuda()
 
-    return (
-        list(prompts),
-        list(question_ids),
-        list(img_ids),
-        input_ids_batch,
-        guidance_ids_batch,
-        image_tensor_batch,
-        guidance_image_tensor_batch,
-        attn_mask_batch,
-        guidance_attn_mask_batch
-    )
+
+    rtn_values = {
+        "prompts": list(prompts),
+        "question_ids": list(question_ids),
+        "img_ids": list(img_ids),
+        "inputs": {
+            "input_ids": input_ids_batch,
+            "attention_mask": attn_mask_batch,
+            "pixel_values": image_tensor_batch,
+        },
+        "guidance_inputs": {
+            "input_ids": guidance_ids_batch,
+            "attention_mask": guidance_attn_mask_batch,
+            "pixel_values": guidance_image_tensor_batch,
+        }
+    }
+
+
+    if 'qformer_input_ids' in inputs_list[0]:
+        qformer_input_ids_list = [inp['qformer_input_ids'] for inp in inputs_list]
+        qformer_attention_masks_list = [inp['qformer_attention_mask'] for inp in inputs_list]
+        qformer_input_ids_batch = process_sequence(qformer_input_ids_list).cuda()
+        qformer_attn_mask_batch = process_sequence(qformer_attention_masks_list).cuda()
+
+        rtn_values['inputs']['qformer_input_ids'] = qformer_input_ids_batch
+        rtn_values['inputs']['qformer_attention_masks'] = qformer_attn_mask_batch
+
+    if 'qformer_input_ids' in guidance_inputs_list[0]:
+        guidance_qformer_input_ids_list = [inp['qformer_input_ids'] for inp in guidance_inputs_list]
+        guidance_qformer_attention_masks_list = [inp['qformer_attention_mask'] for inp in guidance_inputs_list]
+        guidance_qformer_input_ids_batch = process_sequence(guidance_qformer_input_ids_list).cuda()
+        guidance_qformer_attn_mask_batch = process_sequence(guidance_qformer_attention_masks_list).cuda()
+
+        rtn_values['guidance_inputs']['qformer_input_ids'] = guidance_qformer_input_ids_batch
+        rtn_values['guidance_inputs']['qformer_attention_masks'] = guidance_qformer_attn_mask_batch
+
+    return rtn_values
