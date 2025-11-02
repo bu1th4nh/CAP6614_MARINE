@@ -76,3 +76,4 @@ for BENCHMARK in "${benchmark_lst[@]}"; do
 
         done
     fi
+done
