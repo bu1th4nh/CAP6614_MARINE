@@ -126,22 +126,20 @@ class Collator:
         guidance_prompts = [x["full_prompt_neg"] for x in batch]
 
 
-        logging.fatal(f"Images: {len(global_input_images)}, Prompts: {len(input_prompts)}, Guidance: {len(guidance_prompts)}")
+        logging.fatal(f"Images: {(global_input_images)}\nPrompts: {(input_prompts)}\nGuidance: {(guidance_prompts)}")
 
         
         inputs = self.processor(
             images=global_input_images, 
             text=input_prompts, 
             return_tensors="pt",
-            padding=True,
-            use_fast=False,
         ).to(self.device)
+
+
         guidance_inputs = self.processor(
             images=global_input_images, 
             text=guidance_prompts, 
             return_tensors="pt",
-            padding=True,
-            use_fast=False,
         ).to(self.device)
 
         logging.fatal(inputs)
