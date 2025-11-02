@@ -87,7 +87,7 @@ class COCOEvalDataset(Dataset):
 
 
         logging.fatal(f"Type of inputs: {type(inputs)}")
-        logging.fatal(f"Input keys: {inputs.keys()}")
+        logging.fatal(f"Input keys: {dict(inputs.keys()).keys()}")
         
         if self.custom_flavor == "instructblip":
             return (
