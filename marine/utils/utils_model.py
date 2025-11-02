@@ -26,7 +26,7 @@ def load_model(model_name: str, model_path: str):
             model_path,
             torch_dtype="auto",
             device_map="auto",                      # let HF shard it
-            max_memory={0: "31GiB", 1: "31GiB", "cpu": "64GiB"},
+            max_memory={0: "31GiB", "cpu": "64GiB"},
             offload_folder="offload_instructblip"   # optional: CPU/disk spillover
         )
         processor = InstructBlipProcessor.from_pretrained(model_path)
