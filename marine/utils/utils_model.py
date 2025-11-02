@@ -20,12 +20,11 @@ def load_model(model_name: str, model_path: str):
         return model, tokenizer, processor
 
     elif "instructblip" in model_name:
-        from transformers import InstructBlipProcessor, InstructBlipForConditionalGeneration
+        from transformers import InstructBlipProcessor, InstructBlipForConditionalGeneration, AutoProcessor
 
         model = InstructBlipForConditionalGeneration.from_pretrained(model_path).cuda()
-        processor = InstructBlipProcessor.from_pretrained(model_path)
+        processor = AutoProcessor.from_pretrained(model_path)
         tokenizer = processor.tokenizer
-
 
         # Make sure processor carries the model’s num_query_tokens
         if getattr(processor, "num_query_tokens", None) is None:

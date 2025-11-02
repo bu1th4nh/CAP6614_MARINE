@@ -112,6 +112,7 @@ def eval_model(args):
                             guidance_strength=args.guidance_strength,
                             guidance_inputs=guidance_inputs,
                             model=model,
+                            tokenizer=tokenizer
                         ),
                     ])
                 )
