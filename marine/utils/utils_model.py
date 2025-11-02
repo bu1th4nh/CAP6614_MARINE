@@ -22,7 +22,7 @@ def load_model(model_name: str, model_path: str):
     elif "instructblip" in model_name:
         from transformers import InstructBlipProcessor, InstructBlipForConditionalGeneration
 
-        model = InstructBlipForConditionalGeneration.from_pretrained(model_path).cuda()
+        model = InstructBlipForConditionalGeneration.from_pretrained(model_path).eval().cuda()
         processor = InstructBlipProcessor.from_pretrained(model_path)
         tokenizer = processor.tokenizer
 
