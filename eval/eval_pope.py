@@ -1,9 +1,14 @@
 import os
+import sys
 import json
 import glob
+import logging
 import argparse
 from typing import List
 from sklearn.metrics import confusion_matrix
+sys.path.append(os.getcwd())
+from log_config import initialize_logging
+initialize_logging()
 
 
 def get_parser():
@@ -75,19 +80,19 @@ def pope(args):
     label_path = os.path.join(args.label_dir, args.label_file.replace('.json', '_label.json'))
     answer_path = os.path.join(args.answer_dir, args.answer_file)
 
-    print(f"== Evaluating POPE for {args.answer_file} ==")
+    logging.info(f"== Evaluating POPE for {args.answer_file} ==")
 
     labels = load_labels(label_path)
     preds, answers = load_predictions(answer_path, args.model)
 
     if len(labels) != len(answers):
-        print(f"[ERROR] Answer count ({len(answers)}) does not match label count ({len(labels)}).")
+        logging.error(f"[ERROR] Answer count ({len(answers)}) does not match label count ({len(labels)}).")
         return
 
     results = compute_metrics(labels, preds, answers, answer_path)
 
-    print(f"{'Accuracy':<10}{'F1':<10}{'Yes_ratio':<10}")
-    print(f"{results['overall_metrics']['Accuracy']:<10}{results['overall_metrics']['F1']:<10}{results['overall_metrics']['Yes_ratio']:<10}")
+    logging.info(f"{'Accuracy':<10}{'F1':<10}{'Yes_ratio':<10}")
+    logging.info(f"{results['overall_metrics']['Accuracy']:<10}{results['overall_metrics']['F1']:<10}{results['overall_metrics']['Yes_ratio']:<10}")
 
     save_results(args.save_file, results)
 
@@ -100,6 +105,7 @@ if __name__ == "__main__":
     eval_files = glob.glob(os.path.join(args.eval_dir, "*.jsonl")) + glob.glob(os.path.join(args.eval_dir, "*.json"))
 
     for file in eval_files:
+        logging.info(f"Processing file: {file}")
         args.answer_file = os.path.basename(file)
         args.answer_dir = args.eval_dir
         pope(args)
