@@ -122,14 +122,12 @@ class Collator:
 
         # Prepare inputs
         global_input_images = [x["image"].resize((224, 224)) for x in batch]
-        input_prompts = [x["full_prompt"] for x in batch]
-        guidance_prompts = [x["full_prompt_neg"] for x in batch]
+        input_prompts = [x["full_prompt"].replace("<image>", "") for x in batch]
+        guidance_prompts = [x["full_prompt_neg"].replace("<image>", "") for x in batch]
 
         # input_prompts = ["What's in this image?" for x in batch]
         # guidance_prompts = ["Describe this image in detail." for x in batch]
 
-        logging.fatal(input_prompts[0])
-        logging.fatal(guidance_prompts[0])
 
         
         inputs = self.processor(
