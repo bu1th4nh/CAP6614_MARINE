@@ -154,7 +154,8 @@ def eval_model(args):
         input_token_len = input_ids.shape[1]
 
         # Batch decode the outputs
-        decoded_outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)
+        decoded_outputs = tokenizer.batch_decode(
+            output_ids[:, input_token_len:], skip_special_tokens=True)
 
         for i, output in tqdm(enumerate(decoded_outputs), total=len(decoded_outputs), desc="Processing outputs"):
             # Process each output
