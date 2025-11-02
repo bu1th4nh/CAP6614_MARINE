@@ -56,7 +56,7 @@ class COCOEvalDataset(Dataset):
             raise ValueError(f"Missing image in question {question_id}")
 
         image_path = os.path.join(self.image_dir, img_id)
-        image = Image.open(image_path)
+        image = Image.open(image_path).convert("RGB")
 
         qs = data["conversations"][0]["value"].replace("<image>", "").strip()
         qs_neg = data["conversations"][-1]["value"]
@@ -82,8 +82,8 @@ class COCOEvalDataset(Dataset):
         conv_neg.append_message(conv_neg.roles[1], None)
         full_prompt_neg = conv_neg.get_prompt()
 
-        logging.fatal(f"Full prompt: {full_prompt}")
-        logging.fatal(f"Full negative prompt: {full_prompt_neg}")
+        # logging.fatal(f"Full prompt: {full_prompt}")
+        # logging.fatal(f"Full negative prompt: {full_prompt_neg}")
 
         # Tokenize
         inputs = self.processor(text=full_prompt, images=image, return_tensors="pt")
@@ -120,14 +120,21 @@ def custom_collate_fn(batch: List[Tuple[
     ) = zip(*batch)
 
 
+    logging.fatal(f"Type of prompts: {type(prompts)}")
+    logging.fatal(f"Type of question_ids: {type(question_ids)}")
+    logging.fatal(f"Type of img_ids: {type(img_ids)}")
+    logging.fatal(f"Type of inputs_list: {type(inputs_list)}")
+    logging.fatal(f"Type of inputs_list[0]: {type(inputs_list[0])}")
+    
+
     
     input_ids_list = [inp["input_ids"] for inp in inputs_list]
-    image_tensors = [inp["pixel_values"].squeeze(0) for inp in inputs_list]
+    image_tensors = [inp["pixel_values"] for inp in inputs_list]
     attention_masks_list = [inp["attention_mask"] for inp in inputs_list]
 
 
     guidance_ids_list = [g_inp["input_ids"] for g_inp in guidance_inputs_list]  
-    guidance_image_tensors = [g_inp["pixel_values"].squeeze(0) for g_inp in guidance_inputs_list]
+    guidance_image_tensors = [g_inp["pixel_values"] for g_inp in guidance_inputs_list]
     guidance_attention_masks_list = [g_inp["attention_mask"] for g_inp in guidance_inputs_list]
 
 
@@ -136,13 +143,13 @@ def custom_collate_fn(batch: List[Tuple[
         return pad_sequence(seq_list, batch_first=True, padding_value=0).flip(dims=[1])
 
     input_ids_batch = process_sequence(input_ids_list).cuda()
-    guidance_ids_batch = process_sequence(guidance_ids_list).cuda()
-    
+    attn_mask_batch = process_sequence(attention_masks_list).cuda()
     image_tensor_batch = torch.stack(image_tensors).squeeze(1).cuda()
+    
+    guidance_ids_batch = process_sequence(guidance_ids_list).cuda()
+    guidance_attn_mask_batch = process_sequence(guidance_attention_masks_list).cuda()
     guidance_image_tensor_batch = torch.stack(guidance_image_tensors).squeeze(1).cuda()
 
-    attn_mask_batch = process_sequence(attention_masks_list).cuda()
-    guidance_attn_mask_batch = process_sequence(guidance_attention_masks_list).cuda()
 
 
     rtn_values = {
