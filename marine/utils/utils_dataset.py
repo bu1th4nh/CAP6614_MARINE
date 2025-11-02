@@ -110,6 +110,13 @@ class COCOEvalDataset(Dataset):
 
 
 
+def dict_collate_fn(batch: List[Mapping[str, Any]]):
+    """
+    Collate function to batch a list of dictionaries.
+    """
+    return batch
+
+
 def custom_collate_fn(batch: List[Tuple[
     str,          # cur_prompt
     str,          # question_id
