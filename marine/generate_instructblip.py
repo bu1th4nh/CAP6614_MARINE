@@ -97,22 +97,24 @@ def eval_model(args):
             if args.guidance_strength == 0:
                 output_ids = model.generate(
                     **inputs,
-                    do_sample=False,
-                    temperature=args.temperature,
-                    top_p=args.top_p,
-                    max_new_tokens=args.max_new_tokens,
-                    use_cache=True,
-                    repetition_penalty=1.1,
+                    num_beams=5,
+                    max_new_tokens=256,
+                    min_length=1,
+                    top_p=0.9,
+                    repetition_penalty=1.5,
+                    length_penalty=1.0,
+                    temperature=1,
                 )
             else:
                 output_ids = model.generate(
                     **inputs,
-                    do_sample=False,
-                    temperature=args.temperature,
-                    top_p=args.top_p,
-                    max_new_tokens=args.max_new_tokens,
-                    use_cache=True,
-                    repetition_penalty=1.1,
+                    num_beams=5,
+                    max_new_tokens=256,
+                    min_length=1,
+                    top_p=0.9,
+                    repetition_penalty=1.5,
+                    length_penalty=1.0,
+                    temperature=1,
                     logits_processor=LogitsProcessorList([
                         GuidanceLogits(
                             guidance_strength=args.guidance_strength,
