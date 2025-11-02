@@ -142,7 +142,7 @@ class Collator:
             padding=True
         ).to(self.device)
 
-
+        logging.fatal(inputs)
         return {
             "prompts": list(prompts),
             "question_ids": list(question_ids),
