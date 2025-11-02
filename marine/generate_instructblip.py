@@ -79,8 +79,12 @@ def eval_model(args):
         input_prompts = [x["full_prompt"] for x in data_batch]
         guidance_prompts = [x["full_prompt_neg"] for x in data_batch]
         
-        inputs = processor(text=input_prompts, images=global_input_images, return_tensors="pt", padding=True, truncation=False).cuda()
-        guidance_inputs = processor(text=guidance_prompts, images=global_input_images, return_tensors="pt", padding=True, truncation=False).cuda()
+        inputs = processor(text=input_prompts, images=global_input_images, return_tensors="pt", padding=True, truncation=False)
+        guidance_inputs = processor(text=guidance_prompts, images=global_input_images, return_tensors="pt", padding=True, truncation=False)
+
+
+        inputs = {k: v.to(model.device, non_blocking=True) for k,v in inputs.items()}
+        guidance_inputs = {k: v.to(model.device, non_blocking=True) for k,v in guidance_inputs.items()}
 
 
         with torch.inference_mode():
