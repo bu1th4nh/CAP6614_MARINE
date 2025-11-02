@@ -129,16 +129,13 @@ class Collator:
             images=global_input_images, 
             text=input_prompts, 
             return_tensors="pt"
-        )
+        ).to(self.device)
         guidance_inputs = self.processor(
             images=global_input_images, 
             text=guidance_prompts, 
             return_tensors="pt"
-        )
+        ).to(self.device)
 
-
-        inputs = {k: v.to(self.device, non_blocking=True) for k,v in inputs.items()}
-        guidance_inputs = {k: v.to(self.device, non_blocking=True) for k,v in guidance_inputs.items()}
 
         return {
             "prompts": list(prompts),
