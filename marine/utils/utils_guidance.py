@@ -39,18 +39,14 @@ class GuidanceLogits(LogitsProcessor):
             if self.qformer_input_ids is not None and self.qformer_attention_mask is not None:
                 self.out = self.model(
                     input_ids[:, -1:],
-                    pixel_values=self.images,
-                    attention_mask=self.attention_mask,
-                    qformer_input_ids=self.qformer_input_ids,
-                    qformer_attention_mask=self.qformer_attention_mask,
-                    use_cache=True
+                    use_cache=True,
+                    past_key_values=self.out.past_key_values,
                 )
             else:
                 self.out = self.model(
                     input_ids[:, -1:],
-                    pixel_values=self.images,
-                    attention_mask=self.attention_mask,
-                    use_cache=True
+                    use_cache=True,
+                    past_key_values=self.out.past_key_values,
                 )
 
         if len(self.out.logits) == 1:
