@@ -64,62 +64,29 @@ def eval_model(args):
         getattr(model.config, 'mm_use_im_start_end', False)
         # custom_flavor='instructblip'
     )
-    eval_dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, collate_fn=custom_collate_fn)
+    eval_dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, collate_fn=None)
 
     # generate
     for data_batch in tqdm(eval_dataloader, desc="Evaluating", total=len(eval_dataloader)):
 
-        prompts = data_batch["prompts"]
-        question_ids = data_batch["question_ids"]
-        img_ids = data_batch["img_ids"]
+        # Metadata
+        prompts = [x["cur_prompt"] for x in data_batch]
+        question_ids = [x["question_id"] for x in data_batch]
+        img_ids = [x["img_id"] for x in data_batch]
 
-        # input_ids, 
-        # images, 
-        # attention_masks, 
-
-        # guidance_ids, 
-        # guidance_images, 
-        # guidance_attention_masks
+        # Prepare inputs
+        global_input_images = [x["image"] for x in data_batch]
+        input_prompts = [x["full_prompt"] for x in data_batch]
+        guidance_prompts = [x["full_prompt_neg"] for x in data_batch]
         
-
-        input_ids                         = data_batch["inputs"]["input_ids"]
-        input_images                      = data_batch["inputs"]["pixel_values"]
-        input_attention_masks             = data_batch["inputs"]["attention_masks"]
-        input_qformer_input_ids           = data_batch["inputs"].get("qformer_input_ids", None)
-        input_qformer_attention_mask      = data_batch["inputs"].get("qformer_attention_masks", None)
-
-
-        
-        guidance_ids                      = data_batch["guidance_inputs"]["input_ids"]
-        guidance_images                   = data_batch["guidance_inputs"]["pixel_values"]
-        guidance_attention_masks          = data_batch["guidance_inputs"]["attention_masks"]
-        guidance_qformer_input_ids        = data_batch["guidance_inputs"].get("qformer_input_ids", None)
-        guidance_qformer_attention_mask   = data_batch["guidance_inputs"].get("qformer_attention_masks", None)
-        
-
-
-        logging.info(f"input_ids shape: {input_ids.shape}, device: {input_ids.device}")
-        logging.info(f"input_images shape: {input_images.shape}, device: {input_images.device}")
-        logging.info(f"input_attention_masks shape: {input_attention_masks.shape}, device: {input_attention_masks.device}")
-        logging.info(f"input_qformer_input_ids shape: {input_qformer_input_ids.shape if input_qformer_input_ids is not None else None}, device: {input_qformer_input_ids.device if input_qformer_input_ids is not None else None}")
-        logging.info(f"input_qformer_attention_mask shape: {input_qformer_attention_mask.shape if input_qformer_attention_mask is not None else None}, device: {input_qformer_attention_mask.device if input_qformer_attention_mask is not None else None}")
-
-        logging.info(f"guidance_ids shape: {guidance_ids.shape}, device: {guidance_ids.device}")
-        logging.info(f"guidance_images shape: {guidance_images.shape}, device: {guidance_images.device}")
-        logging.info(f"guidance_attention_masks shape: {guidance_attention_masks.shape}, device: {guidance_attention_masks.device}")
-        logging.info(f"guidance_qformer_input_ids shape: {guidance_qformer_input_ids.shape if guidance_qformer_input_ids is not None else None}, device: {guidance_qformer_input_ids.device if guidance_qformer_input_ids is not None else None}")
-        logging.info(f"guidance_qformer_attention_mask shape: {guidance_qformer_attention_mask.shape if guidance_qformer_attention_mask is not None else None}, device: {guidance_qformer_attention_mask.device if guidance_qformer_attention_mask is not None else None}")
-
+        inputs = processor(text=input_prompts, images=global_input_images, return_tensors="pt", padding=True, truncation=False).cuda()
+        guidance_inputs = processor(text=guidance_prompts, images=global_input_images, return_tensors="pt", padding=True, truncation=False).cuda()
 
 
         with torch.inference_mode():
             if args.guidance_strength == 0:
                 output_ids = model.generate(
-                    input_ids = input_ids,
-                    pixel_values=input_images,
-                    attention_mask=input_attention_masks,
-                    qformer_input_ids=input_qformer_input_ids,
-                    qformer_attention_mask=input_qformer_attention_mask,
+                    **inputs,
                     do_sample=False,
                     temperature=args.temperature,
                     top_p=args.top_p,
@@ -129,11 +96,7 @@ def eval_model(args):
                 )
             else:
                 output_ids = model.generate(
-                    input_ids=input_ids,
-                    pixel_values=input_images,
-                    attention_mask=input_attention_masks,
-                    qformer_input_ids=input_qformer_input_ids,
-                    qformer_attention_mask=input_qformer_attention_mask,
+                    **inputs,
                     do_sample=False,
                     temperature=args.temperature,
                     top_p=args.top_p,
@@ -141,19 +104,15 @@ def eval_model(args):
                     use_cache=True,
                     repetition_penalty=1.1,
                     logits_processor=LogitsProcessorList([
-                        GuidanceLogits(guidance_strength=args.guidance_strength,
-                                guidance=guidance_ids,
-                                images=guidance_images,
-                                attention_mask=guidance_attention_masks,
-                                model=model,
-                                tokenizer=tokenizer,
-                                qformer_input_ids=guidance_qformer_input_ids,
-                                qformer_attention_mask=guidance_qformer_attention_mask
+                        GuidanceLogits(
+                            guidance_strength=args.guidance_strength,
+                            guidance_inputs=guidance_inputs,
+                            model=model,
                         ),
                     ])
                 )
 
-        input_token_len = input_ids.shape[1]
+        input_token_len = inputs["input_ids"].shape[1]
 
         # Batch decode the outputs
         decoded_outputs = tokenizer.batch_decode(

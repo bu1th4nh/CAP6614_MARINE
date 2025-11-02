@@ -86,17 +86,27 @@ class COCOEvalDataset(Dataset):
         # logging.fatal(f"Full negative prompt: {full_prompt_neg}")
 
         # Tokenize
-        inputs = self.processor(text=full_prompt, images=image, return_tensors="pt", padding=True, truncation=False)
-        guidance_inputs = self.processor(text=full_prompt_neg, images=image, return_tensors="pt", padding=True, truncation=False)
+        # inputs = self.processor(text=full_prompt, images=image, return_tensors="pt", padding=True, truncation=False)
+        # guidance_inputs = self.processor(text=full_prompt_neg, images=image, return_tensors="pt", padding=True, truncation=False)
 
     
-        return (
-            cur_prompt,
-            question_id,
-            img_id,
-            inputs,
-            guidance_inputs
-        )
+        # return (
+        #     cur_prompt,
+        #     question_id,
+        #     img_id,
+        #     inputs,
+        #     guidance_inputs
+        # )
+    
+        
+        return {
+            "cur_prompt": cur_prompt,
+            "question_id": question_id,
+            "img_id": img_id,
+            "full_prompt": full_prompt,
+            "full_prompt_neg": full_prompt_neg,
+            "image": image,
+        }
 
 
 
@@ -125,7 +135,7 @@ def custom_collate_fn(batch: List[Tuple[
     # logging.fatal(f"Type of inputs_list[0]: {type(inputs_list[0])}")
 
 
-    logging.fatal(f"input keys: {list(inputs_list[0].keys())}")
+    logging.fatal(f"input keys: {inputs_list[0]}")
 
 
     
