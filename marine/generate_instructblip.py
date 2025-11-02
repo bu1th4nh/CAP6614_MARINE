@@ -66,28 +66,32 @@ def eval_model(args):
     )
 
     collator = Collator(processor, model.device)
-    eval_dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, collate_fn=collator.bypass_collate_fn)
+    eval_dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, collate_fn=collator.dict_collate_fn_with_process)
 
     # generate
     for data_batch in tqdm(eval_dataloader, desc="Evaluating", total=len(eval_dataloader)):
 
-        # Metadata
-        prompts = [x["cur_prompt"] for x in data_batch]
-        question_ids = [x["question_id"] for x in data_batch]
-        img_ids = [x["img_id"] for x in data_batch]
+        # # Metadata
+        # prompts = [x["cur_prompt"] for x in data_batch]
+        # question_ids = [x["question_id"] for x in data_batch]
+        # img_ids = [x["img_id"] for x in data_batch]
 
-        # Prepare inputs
-        global_input_images = [x["image"] for x in data_batch]
-        input_prompts = [x["full_prompt"] for x in data_batch]
-        guidance_prompts = [x["full_prompt_neg"] for x in data_batch]
+        # # Prepare inputs
+        # global_input_images = [x["image"] for x in data_batch]
+        # input_prompts = [x["full_prompt"] for x in data_batch]
+        # guidance_prompts = [x["full_prompt_neg"] for x in data_batch]
         
-        inputs = processor(text=input_prompts, images=global_input_images, return_tensors="pt", padding=True, truncation=False)
-        guidance_inputs = processor(text=guidance_prompts, images=global_input_images, return_tensors="pt", padding=True, truncation=False)
+        # inputs = processor(text=input_prompts, images=global_input_images, return_tensors="pt", padding=True, truncation=False)
+        # guidance_inputs = processor(text=guidance_prompts, images=global_input_images, return_tensors="pt", padding=True, truncation=False)
 
 
-        inputs = {k: v.to(model.device, non_blocking=True) for k,v in inputs.items()}
-        guidance_inputs = {k: v.to(model.device, non_blocking=True) for k,v in guidance_inputs.items()}
+        # inputs = {k: v.to(model.device, non_blocking=True) for k,v in inputs.items()}
+        # guidance_inputs = {k: v.to(model.device, non_blocking=True) for k,v in guidance_inputs.items()}
 
+        prompts = data_batch["prompts"]
+        question_ids = data_batch["question_ids"]
+        inputs = data_batch["inputs"]
+        guidance_inputs = data_batch["guidance_inputs"]
 
         with torch.inference_mode():
             if args.guidance_strength == 0:

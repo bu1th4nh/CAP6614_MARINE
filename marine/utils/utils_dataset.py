@@ -125,8 +125,8 @@ class Collator:
         input_prompts = [x["full_prompt"] for x in batch]
         guidance_prompts = [x["full_prompt_neg"] for x in batch]
         
-        inputs = self.processor(text=input_prompts, images=global_input_images, return_tensors="pt", padding=True, truncation=False)
-        guidance_inputs = self.processor(text=guidance_prompts, images=global_input_images, return_tensors="pt", padding=True, truncation=False)
+        inputs = self.processor(text=input_prompts, images=global_input_images, return_tensors="pt")
+        guidance_inputs = self.processor(text=guidance_prompts, images=global_input_images, return_tensors="pt")
 
 
         inputs = {k: v.to(self.device, non_blocking=True) for k,v in inputs.items()}
