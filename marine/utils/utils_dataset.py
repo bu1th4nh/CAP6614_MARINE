@@ -33,8 +33,8 @@ class COCOEvalDataset(Dataset):
         processor,
         tokenizer,
         conv_mode: str,
-        mm_use_im_start_end: bool,
-        # custom_flavor: str = None
+        mm_use_im_start_end: bool = False,
+        custom_flavor: str = None
     ):
         self.questions = questions
         self.image_dir = image_dir
@@ -42,7 +42,7 @@ class COCOEvalDataset(Dataset):
         self.tokenizer = tokenizer
         self.conv_mode = conv_mode
         self.mm_use_im_start_end = mm_use_im_start_end
-        # self.custom_flavor = custom_flavor
+        self.custom_flavor = custom_flavor
 
     def __len__(self) -> int:
         return len(self.questions)
@@ -61,6 +61,7 @@ class COCOEvalDataset(Dataset):
         qs = data["conversations"][0]["value"].replace("<image>", "").strip()
         qs_neg = data["conversations"][-1]["value"]
 
+        
         # Add image tokens
         image_token = DEFAULT_IMAGE_TOKEN
         if self.mm_use_im_start_end:
@@ -81,15 +82,12 @@ class COCOEvalDataset(Dataset):
         conv_neg.append_message(conv_neg.roles[1], None)
         full_prompt_neg = conv_neg.get_prompt()
 
+        logging.fatal(f"Full prompt: {full_prompt}")
+        logging.fatal(f"Full negative prompt: {full_prompt_neg}")
+
         # Tokenize
         inputs = self.processor(text=full_prompt, images=image, return_tensors="pt")
         guidance_inputs = self.processor(text=full_prompt_neg, images=image, return_tensors="pt")
-
-        logging.fatal(f"Image shape: {inputs['pixel_values'].shape}")
-        logging.fatal(f"Guidance Image shape: {guidance_inputs['pixel_values'].shape}")
-
-        # logging.fatal(f"Type of inputs: {type(inputs)}")
-        # logging.fatal(f"Input keys: {list(inputs.keys())}")
 
     
         return (
