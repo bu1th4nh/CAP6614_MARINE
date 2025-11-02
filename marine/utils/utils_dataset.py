@@ -111,13 +111,11 @@ def custom_collate_fn(batch: List[Tuple[
     Custom collate function to pad input/guidance_ids and attention masks,
     and stack image tensors. All outputs are moved to CUDA.
     """
-    (
-        prompts,
-        question_ids,
-        img_ids,
-        inputs_list, # List of "input", each is a BatchEncoding
-        guidance_inputs_list
-    ) = zip(*batch)
+    prompts = [item[0] for item in batch]
+    question_ids = [item[1] for item in batch]
+    img_ids = [item[2] for item in batch]
+    inputs_list = [item[3] for item in batch]
+    guidance_inputs_list = [item[4] for item in batch]
 
 
     logging.fatal(f"Type of prompts: {type(prompts)}")
@@ -125,7 +123,7 @@ def custom_collate_fn(batch: List[Tuple[
     logging.fatal(f"Type of img_ids: {type(img_ids)}")
     logging.fatal(f"Type of inputs_list: {type(inputs_list)}")
     logging.fatal(f"Type of inputs_list[0]: {type(inputs_list[0])}")
-    
+
 
     
     input_ids_list = [inp["input_ids"] for inp in inputs_list]
