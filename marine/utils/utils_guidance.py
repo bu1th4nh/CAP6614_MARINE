@@ -60,7 +60,7 @@ class GuidanceLogits(LogitsProcessor):
             guidance_logits = F.log_softmax(self.out.logits[:,-1:], dim=-1).to(logits.device)
             guidance_logits = guidance_logits.squeeze(1)
 
-        logging.fatal(f"Guidance logits shape: {guidance_logits.shape}, Logits shape: {logits.shape}")
+        # logging.fatal(f"Guidance logits shape: {guidance_logits.shape}, Logits shape: {logits.shape}")
         # Expand guidance_logits to match logits shape
         if guidance_logits.shape != logits.shape:
             guidance_logits = guidance_logits.expand_as(logits)
