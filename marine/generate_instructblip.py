@@ -19,7 +19,7 @@ from transformers import LogitsProcessorList
 import logging
 
 from marine.utils.utils import get_chunk, get_answers_file_name, get_model_name_from_path
-from marine.utils.utils_dataset import COCOEvalDataset, custom_collate_instructblip
+from marine.utils.utils_dataset import *
 from marine.utils.utils_guidance import GuidanceLogits
 from marine.utils.utils_model import load_model
 
@@ -56,6 +56,15 @@ def eval_model(args):
     os.makedirs(os.path.dirname(answers_file), exist_ok=True)
     ans_file = open(answers_file, "w")
 
+
+
+
+    collate_fn = make_unified_collate(
+        tokenizer_pad_id=(tokenizer.pad_token_id or 0),
+        left_pad=True   # matches your previous flip-pad-flip semantics
+    )
+
+
     dataset = COCOEvalDataset(
         questions, 
         args.image_folder,
@@ -64,7 +73,7 @@ def eval_model(args):
         getattr(model.config, 'mm_use_im_start_end', False),
         custom_flavor='instructblip'
     )
-    eval_dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, collate_fn=None)
+    eval_dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, collate_fn=collate_fn)
 
     # generate
     for (
@@ -74,6 +83,12 @@ def eval_model(args):
         inputs,
         guidance_inputs
     ) in tqdm(eval_dataloader, desc="Evaluating", total=len(eval_dataloader)):
+        for pack in (inputs, guidance_inputs):
+            for k, v in pack.items():
+                if torch.is_tensor(v):
+                    pack[k] = v.cuda(non_blocking=True)
+
+
         input_ids                = inputs["input_ids"]
         guidance_ids             = guidance_inputs["input_ids"]
         images                   = inputs["pixel_values"]

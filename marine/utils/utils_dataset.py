@@ -11,6 +11,9 @@ from copy import deepcopy
 from llava.constants import DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
 from llava.conversation import conv_templates
 
+from typing import Iterable
+from transformers import BatchEncoding
+
 
 class COCOEvalDataset(Dataset):
     """
@@ -98,125 +101,104 @@ class COCOEvalDataset(Dataset):
             )
 
 
-def custom_collate_fn(batch: List[Tuple[
-    str,          # cur_prompt
-    str,          # question_id
-    str,          # img_id
-    torch.Tensor, # input_ids
-    torch.Tensor, # guidance_input_ids
-    torch.Tensor, # image_tensor
-    torch.Tensor, # guidance_image_tensor
-    torch.Tensor, # attention_mask
-    torch.Tensor  # guidance_attention_mask
-]]) -> Tuple[torch.Tensor, ...]:
+def _pad_left_1d(seqs: Iterable[torch.Tensor], pad_value: int) -> torch.Tensor:
+    # seqs: list of 1D tensors [L_i]
+    flipped = [s.flip(0) for s in seqs]
+    out = pad_sequence(flipped, batch_first=True, padding_value=pad_value).flip(1)
+    return out  # (B, Lmax), left-padded
+
+def _stack_or_pad_enc_list(enc_list: Tuple[Any, ...],
+                           pad_token_id: int = 0,
+                           left_pad: bool = True) -> BatchEncoding:
     """
-    Custom collate function to pad input/guidance_ids and attention masks,
-    and stack image tensors. All outputs are moved to CUDA.
+    Merge a tuple of per-item encodings (BatchEncoding or dict-like) into one batched BatchEncoding.
+    - 1D sequences -> pad
+    - 3D tensors   -> stack (images: C,H,W)
+    - If tensors arrive with a fake leading batch dim (1, ...), squeeze it.
     """
-    (
-        prompts,
-        question_ids,
-        img_ids,
-        input_ids_list,
-        guidance_ids_list,
-        image_tensors,
-        guidance_image_tensors,
-        attention_masks_list,
-        guidance_attention_masks_list
-    ) = zip(*batch)
+    # Normalize each item to a dict of tensors
+    norm = []
+    for e in enc_list:
+        if isinstance(e, BatchEncoding):
+            d = {k: (v if isinstance(v, torch.Tensor) else torch.as_tensor(v)) for k, v in e.items()}
+        elif isinstance(e, dict):
+            d = {k: (v if isinstance(v, torch.Tensor) else torch.as_tensor(v)) for k, v in e.items()}
+        else:
+            raise TypeError(f"Unsupported encoding type: {type(e)}")
+        # squeeze fake leading batch dim some processors return
+        for k, v in d.items():
+            if v.ndim >= 2 and v.shape[0] == 1:
+                d[k] = v.squeeze(0)
+        norm.append(d)
 
-    def process_sequence(seq_list):
-        seq_list = [seq.squeeze(0).flip(dims=[0]) for seq in seq_list]
-        return pad_sequence(seq_list, batch_first=True, padding_value=0).flip(dims=[1])
+    keys = set().union(*(d.keys() for d in norm))
+    merged = {}
 
-    input_ids_batch = process_sequence(input_ids_list).cuda()
-    guidance_ids_batch = process_sequence(guidance_ids_list).cuda()
-    
-    image_tensor_batch = torch.stack(image_tensors).squeeze(1).cuda()
-    guidance_image_tensor_batch = torch.stack(guidance_image_tensors).squeeze(1).cuda()
+    for k in keys:
+        vals = [d[k] for d in norm if k in d]
+        if not vals:
+            continue
+        d0 = vals[0].ndim
+        if d0 == 1:
+            merged[k] = _pad_left_1d(vals, pad_value=pad_token_id) if left_pad \
+                        else pad_sequence(vals, batch_first=True, padding_value=pad_token_id)
+        elif d0 == 3:
+            # image-like (C,H,W)
+            merged[k] = torch.stack(vals, dim=0)  # (B, C, H, W)
+        else:
+            # Fallback: try stack (e.g., 2D masks HxW or already-batched extras)
+            merged[k] = torch.stack(vals, dim=0)
 
-    attn_mask_batch = process_sequence(attention_masks_list).cuda()
-    guidance_attn_mask_batch = process_sequence(guidance_attention_masks_list).cuda()
+    return BatchEncoding(merged)
 
+# ---------- the collate you asked for ----------
 
-
-    return (
-        list(prompts),
-        list(question_ids),
-        list(img_ids),
-        input_ids_batch,
-        guidance_ids_batch,
-        image_tensor_batch,
-        guidance_image_tensor_batch,
-        attn_mask_batch,
-        guidance_attn_mask_batch
-    )
-
-
-def custom_collate_instructblip(batch: List[Tuple[
-    str,          # cur_prompt
-    str,          # question_id
-    str,          # img_id
-    Any,          # inputs
-    Any           # guidance_inputs
-]]) -> Tuple[torch.Tensor, ...]:
+def make_unified_collate(tokenizer_pad_id: int = 0, left_pad: bool = True):
     """
-    Custom collate function to pad input/guidance_ids and attention masks,
-    and stack image tensors. All outputs are moved to CUDA.
+    Always returns:
+        prompts, question_ids, img_ids, inputs, guidance_inputs
+    - inputs/guidance_inputs are BatchEncoding with padded ids/masks and stacked pixel_values.
+    Supports both:
+      (cur_prompt, question_id, img_id, BatchEncoding, BatchEncoding)          # instructblip path
+      (cur_prompt, question_id, img_id, ids, gids, pix, gpix, mask, gmask)     # llava-style path
     """
+    def _collate(batch: List[Tuple[Any, ...]]):
+        first = batch[0]
+        # InstructBLIP tuple length == 5
+        if len(first) == 5:
+            prompts, qids, img_ids, inputs, guidance_inputs = zip(*batch)
+            fin_inputs   = _stack_or_pad_enc_list(inputs,   pad_token_id=tokenizer_pad_id, left_pad=left_pad)
+            fin_guidance = _stack_or_pad_enc_list(guidance_inputs, pad_token_id=tokenizer_pad_id, left_pad=left_pad)
+            return list(prompts), list(qids), list(img_ids), fin_inputs, fin_guidance
 
+        # LLaVA-style tuple length == 9
+        elif len(first) == 9:
+            (
+                prompts, qids, img_ids,
+                input_ids_list, guidance_ids_list,
+                image_tensors, guidance_image_tensors,
+                attention_masks_list, guidance_attention_masks_list
+            ) = zip(*batch)
 
-    (
-        prompts,
-        question_ids,
-        img_ids,
-        inputs,
-        guidance_inputs
-    ) = zip(*batch)
+            # normalize image shapes to (C,H,W)
+            def _s3(x: torch.Tensor) -> torch.Tensor:
+                return x if x.ndim == 3 else x.squeeze(0)
 
-    
-    # logging.fatal(str(type(guidance_inputs)))
+            inputs_enc = {
+                "input_ids":       _pad_left_1d([t.squeeze(0) for t in input_ids_list], pad_value=tokenizer_pad_id),
+                "attention_mask":  _pad_left_1d([t.squeeze(0) for t in attention_masks_list], pad_value=0),
+                "pixel_values":    torch.stack([_s3(t) for t in image_tensors], dim=0),
+            }
+            guidance_enc = {
+                "input_ids":       _pad_left_1d([t.squeeze(0) for t in guidance_ids_list], pad_value=tokenizer_pad_id),
+                "attention_mask":  _pad_left_1d([t.squeeze(0) for t in guidance_attention_masks_list], pad_value=0),
+                "pixel_values":    torch.stack([_s3(t) for t in guidance_image_tensors], dim=0),
+            }
 
-    print()
+            fin_inputs   = BatchEncoding(inputs_enc)
+            fin_guidance = BatchEncoding(guidance_enc)
+            return list(prompts), list(qids), list(img_ids), fin_inputs, fin_guidance
 
-    def process_sequence(seq_list):
-        seq_list = [seq.squeeze(0).flip(dims=[0]) for seq in seq_list]
-        return pad_sequence(seq_list, batch_first=True, padding_value=0).flip(dims=[1])
-
-    input_ids                = inputs["input_ids"]
-    guidance_ids             = guidance_inputs["input_ids"]
-    images                   = inputs["pixel_values"]
-    guidance_images          = guidance_inputs["pixel_values"]
-    attention_masks          = inputs["attention_mask"]
-    guidance_attention_masks = guidance_inputs["attention_mask"]
-
-
-    finished_input_ids         = process_sequence(input_ids).cuda()
-    finished_guidance_ids      = process_sequence(guidance_ids).cuda()
-
-    finished_images            = torch.stack(images).squeeze(1).cuda()
-    finished_guidance_images   = torch.stack(guidance_images).squeeze(1).cuda()
-
-    finished_attention_masks          = process_sequence(attention_masks).cuda()
-    finished_guidance_attention_masks = process_sequence(guidance_attention_masks).cuda()
-
-    finished_inputs = type(inputs[0])({
-        "input_ids": finished_input_ids,
-        "pixel_values": finished_images,
-        "attention_mask": finished_attention_masks
-    })
-    finished_guidance_inputs = type(guidance_inputs[0])({
-        "input_ids": finished_guidance_ids,
-        "pixel_values": finished_guidance_images,
-        "attention_mask": finished_guidance_attention_masks
-    })
-
-    return (
-        list(prompts),
-        list(question_ids),
-        list(img_ids),
-        inputs,
-        guidance_inputs
-    )
-
-
+        else:
+            raise ValueError(f"Unexpected sample tuple size {len(first)}; expected 5 or 9.")
+    return _collate
