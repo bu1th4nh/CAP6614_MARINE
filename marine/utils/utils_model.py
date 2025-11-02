@@ -21,9 +21,12 @@ def load_model(model_name: str, model_path: str):
 
     elif "instructblip" in model_name:
         from transformers import InstructBlipProcessor, InstructBlipForConditionalGeneration, AutoProcessor, BitsAndBytesConfig
+        quantization_config = BitsAndBytesConfig(load_in_8bit=True)
         model = InstructBlipForConditionalGeneration.from_pretrained(
-            model_path
-        ).cuda()
+            model_path,
+            device_map="cuda",
+            quantization_config=quantization_config
+        )
         processor = InstructBlipProcessor.from_pretrained(model_path)
         tokenizer = processor.tokenizer
 
