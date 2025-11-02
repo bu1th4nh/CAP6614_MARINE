@@ -47,7 +47,7 @@ N8N_WEBHOOK_ID        = os.environ["N8N_WEBHOOK_ID"]
 
 mongo = pymongo.MongoClient(
     host=MONGO_ENDPOINT,
-    port=MONGO_PORT,
+    port=int(MONGO_PORT),
     username=MONGO_USERNAME,
     password=MONGO_PASSWORD,
 )
