@@ -133,13 +133,15 @@ class Collator:
             images=global_input_images, 
             text=input_prompts, 
             return_tensors="pt",
-            padding=True
+            padding=True,
+            use_fast=False,
         ).to(self.device)
         guidance_inputs = self.processor(
             images=global_input_images, 
             text=guidance_prompts, 
             return_tensors="pt",
-            padding=True
+            padding=True,
+            use_fast=False,
         ).to(self.device)
 
         logging.fatal(inputs)
