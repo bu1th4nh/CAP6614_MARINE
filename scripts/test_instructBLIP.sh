@@ -6,7 +6,7 @@ MODEL_VERSION="Salesforce/instructblip-vicuna-7b"
 BATCH_SIZE=24
 SEED=242
 
-guidance_strength_lst=(0.0)
+guidance_strength_lst=(0.0 0.7)
 TYPE=repro
 
 BENCHMARK=chair
@@ -35,35 +35,3 @@ for guidance_strength in "${guidance_strength_lst[@]}"; do
             --max_new_tokens 64
     done
 done
-
-
-#### EVALUATE ####
-if [ $BENCHMARK == "chair" ]; then
-
-    #### CHAIR EVALUATION ####
-    echo "Running $MODEL_VERSION CHAIR metrics with seed = $SEED, batch_size = $BATCH_SIZE"
-
-    python ./eval/format.py \
-        --answer_dir $OUTPUT_DIR
-
-    python ./eval/eval_chair.py \
-        --eval_dir $OUTPUT_DIR \
-        --save_path $OUTPUT_DIR/eval \
-
-elif [ $BENCHMARK == "pope" ]; then
-
-    #### POPE EVALUATION ####
-    for QUESTION_FILE in "${QUESTION_FILE_ls[@]}"; do
-
-        echo "Running $MODEL_VERSION pope evaluation with seed = $SEED, batch_size = $BATCH_SIZE"
-
-        python ./eval/format.py \
-            --answer_dir $OUTPUT_DIR
-
-        python ./eval/eval_pope.py \
-            --eval_dir $OUTPUT_DIR \
-            --save_dir $OUTPUT_DIR/eval \
-            --label_file $QUESTION_FILE \
-
-    done
-fi

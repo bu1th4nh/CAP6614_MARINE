@@ -64,7 +64,7 @@ def eval_model(args):
         getattr(model.config, 'mm_use_im_start_end', False),
         custom_flavor='instructblip'
     )
-    eval_dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, collate_fn=custom_collate_instructblip)
+    eval_dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, collate_fn=None)
 
     # generate
     for (
