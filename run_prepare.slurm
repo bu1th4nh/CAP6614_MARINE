@@ -8,7 +8,7 @@
 #SBATCH --time=48:00:00
 #SBATCH --error=slurm_outputs/prepare.err
 #SBATCH --output=slurm_outputs/prepare.out
-#SBATCH --job-name=prepare
+#SBATCH --job-name=cap6614_bu1th4nh_instructBLIP
 
 module load cuda/cuda-12.2.2
 module load python/python-3.11.4-gcc-12.2.0
