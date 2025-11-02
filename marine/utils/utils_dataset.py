@@ -149,12 +149,12 @@ def custom_collate_fn(batch: List[Tuple[
         "img_ids": list(img_ids),
         "inputs": {
             "input_ids": input_ids_batch,
-            "attention_mask": attn_mask_batch,
+            "attention_masks": attn_mask_batch,
             "pixel_values": image_tensor_batch,
         },
         "guidance_inputs": {
             "input_ids": guidance_ids_batch,
-            "attention_mask": guidance_attn_mask_batch,
+            "attention_masks": guidance_attn_mask_batch,
             "pixel_values": guidance_image_tensor_batch,
         }
     }

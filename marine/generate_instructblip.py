@@ -84,17 +84,17 @@ def eval_model(args):
 
         input_ids                         = data_batch["inputs"]["input_ids"]
         input_images                      = data_batch["inputs"]["pixel_values"]
-        input_attention_masks             = data_batch["inputs"]["attention_mask"]
+        input_attention_masks             = data_batch["inputs"]["attention_masks"]
         input_qformer_input_ids           = data_batch["inputs"].get("qformer_input_ids", None)
-        input_qformer_attention_mask      = data_batch["inputs"].get("qformer_attention_mask", None)
+        input_qformer_attention_mask      = data_batch["inputs"].get("qformer_attention_masks", None)
 
 
         
         guidance_ids                      = data_batch["guidance_inputs"]["input_ids"]
         guidance_images                   = data_batch["guidance_inputs"]["pixel_values"]
-        guidance_attention_masks          = data_batch["guidance_inputs"]["attention_mask"]
+        guidance_attention_masks          = data_batch["guidance_inputs"]["attention_masks"]
         guidance_qformer_input_ids        = data_batch["guidance_inputs"].get("qformer_input_ids", None)
-        guidance_qformer_attention_mask   = data_batch["guidance_inputs"].get("qformer_attention_mask", None)
+        guidance_qformer_attention_mask   = data_batch["guidance_inputs"].get("qformer_attention_masks", None)
         
 
 
