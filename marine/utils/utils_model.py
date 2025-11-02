@@ -21,13 +21,14 @@ def load_model(model_name: str, model_path: str):
 
     elif "instructblip" in model_name:
         from transformers import InstructBlipProcessor, InstructBlipForConditionalGeneration, AutoProcessor, BitsAndBytesConfig
-        # quantization_config = BitsAndBytesConfig(load_in_8bit=True)
+        quantization_config = BitsAndBytesConfig(load_in_8bit=True)
         model = InstructBlipForConditionalGeneration.from_pretrained(
             model_path,
             torch_dtype="auto",
             device_map="auto",                      # let HF shard it
             max_memory={0: "31GiB", "cpu": "64GiB"},
-            offload_folder="offload_instructblip"   # optional: CPU/disk spillover
+            offload_folder="offload_instructblip",  # optional: CPU/disk spillover
+            quantization_config=quantization_config,
         )
         processor = InstructBlipProcessor.from_pretrained(model_path)
         tokenizer = processor.tokenizer
