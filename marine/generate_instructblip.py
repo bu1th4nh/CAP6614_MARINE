@@ -89,9 +89,9 @@ def put_file_to_s3(local_path: str, s3_path: str):
         logging.error(f"Failed to upload {local_path} to {s3_path}. Exception: {e}")
 
 
-if "debug" in N8N_WEBHOOK_ID:
-    logging.warning("Debug webhook detected.")
-    report_message_to_n8n("Test!", msg_type="info")
+# if "test" in N8N_WEBHOOK_ID:
+#     logging.warning("Debug webhook detected.")
+#     report_message_to_n8n("Test!", msg_type="info")
 # -----------------------------------------------------------------------------------------------
 # -----------------------------------------------------------------------------------------------
 
@@ -254,6 +254,6 @@ if __name__ == "__main__":
             'traceback': traceback.format_exc()
         })
         logging.info(f"Error logged with id: {error_log_collection.inserted_id}")
-        report_message_to_n8n(f"Exception occurred during InstructBLIP evaluation: {e}", msg_type="error")
+        report_message_to_n8n(f"Exception occurred during InstructBLIP evaluation: {e}. Traceback: `{traceback.format_exc()}`", msg_type="error")
 
 
