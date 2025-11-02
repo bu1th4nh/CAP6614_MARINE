@@ -121,7 +121,7 @@ class Collator:
         img_ids = [x["img_id"] for x in batch]
 
         # Prepare inputs
-        global_input_images = [x["image"] for x in batch]
+        global_input_images = [x["image"].resize((224, 224)) for x in batch]
         input_prompts = [x["full_prompt"] for x in batch]
         guidance_prompts = [x["full_prompt_neg"] for x in batch]
 
