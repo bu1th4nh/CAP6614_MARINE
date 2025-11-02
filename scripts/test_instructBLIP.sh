@@ -6,7 +6,7 @@ MODEL_VERSION="Salesforce/instructblip-vicuna-7b"
 BATCH_SIZE=24
 SEED=242
 
-guidance_strength_lst=(0.0 0.7)
+guidance_strength_lst=(0.7)
 TYPE=repro
 
 BENCHMARK=chair
