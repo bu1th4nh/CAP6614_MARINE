@@ -22,7 +22,7 @@ OUTPUT_DIR=./output/${MODEL_NAME}/answers/answer_${TYPE}_${BENCHMARK}
 for guidance_strength in "${guidance_strength_lst[@]}"; do
     for QUESTION_FILE in "${QUESTION_FILE_ls[@]}"; do
         echo "Running $MODEL_VERSION inference with guidance_strength = $guidance_strength, seed = $SEED, batch_size = $BATCH_SIZE"
-        python ./marine/generate_${MODEL_NAME}.py \
+        CUDA_LAUNCH_BLOCKING=1 python ./marine/generate_${MODEL_NAME}.py \
             --question_file $QUESTION_FILE \
             --guidance_strength $guidance_strength \
             --answer_path $OUTPUT_DIR \

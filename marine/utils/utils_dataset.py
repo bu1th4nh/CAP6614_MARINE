@@ -34,7 +34,7 @@ class COCOEvalDataset(Dataset):
         tokenizer,
         conv_mode: str,
         mm_use_im_start_end: bool = False,
-        custom_flavor: str = None
+        custom_flavor: str = None,
     ):
         self.questions = questions
         self.image_dir = image_dir
@@ -86,8 +86,8 @@ class COCOEvalDataset(Dataset):
         # logging.fatal(f"Full negative prompt: {full_prompt_neg}")
 
         # Tokenize
-        inputs = self.processor(text=full_prompt, images=image, return_tensors="pt")
-        guidance_inputs = self.processor(text=full_prompt_neg, images=image, return_tensors="pt")
+        inputs = self.processor(text=full_prompt, images=image, return_tensors="pt", padding=True, truncation=False)
+        guidance_inputs = self.processor(text=full_prompt_neg, images=image, return_tensors="pt", padding=True, truncation=False)
 
     
         return (
@@ -118,11 +118,11 @@ def custom_collate_fn(batch: List[Tuple[
     guidance_inputs_list = [item[4] for item in batch]
 
 
-    logging.fatal(f"Type of prompts: {type(prompts)}")
-    logging.fatal(f"Type of question_ids: {type(question_ids)}")
-    logging.fatal(f"Type of img_ids: {type(img_ids)}")
-    logging.fatal(f"Type of inputs_list: {type(inputs_list)}")
-    logging.fatal(f"Type of inputs_list[0]: {type(inputs_list[0])}")
+    # logging.fatal(f"Type of prompts: {type(prompts)}")
+    # logging.fatal(f"Type of question_ids: {type(question_ids)}")
+    # logging.fatal(f"Type of img_ids: {type(img_ids)}")
+    # logging.fatal(f"Type of inputs_list: {type(inputs_list)}")
+    # logging.fatal(f"Type of inputs_list[0]: {type(inputs_list[0])}")
 
 
     

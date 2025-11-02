@@ -61,7 +61,7 @@ def eval_model(args):
         args.image_folder,
         processor, tokenizer, 
         args.conv_mode, 
-        getattr(model.config, 'mm_use_im_start_end', False),
+        getattr(model.config, 'mm_use_im_start_end', False)
         # custom_flavor='instructblip'
     )
     eval_dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, collate_fn=custom_collate_fn)
@@ -120,7 +120,7 @@ def eval_model(args):
                     attention_mask=input_attention_masks,
                     qformer_input_ids=input_qformer_input_ids,
                     qformer_attention_mask=input_qformer_attention_mask,
-                    do_sample=args.sampling,
+                    do_sample=False,
                     temperature=args.temperature,
                     top_p=args.top_p,
                     max_new_tokens=args.max_new_tokens,
@@ -133,7 +133,7 @@ def eval_model(args):
                     attention_mask=input_attention_masks,
                     qformer_input_ids=input_qformer_input_ids,
                     qformer_attention_mask=input_qformer_attention_mask,
-                    do_sample=args.sampling,
+                    do_sample=False,
                     temperature=args.temperature,
                     top_p=args.top_p,
                     max_new_tokens=args.max_new_tokens,

@@ -22,9 +22,14 @@ def load_model(model_name: str, model_path: str):
     elif "instructblip" in model_name:
         from transformers import InstructBlipProcessor, InstructBlipForConditionalGeneration
 
-        model = InstructBlipForConditionalGeneration.from_pretrained(model_path).eval().cuda()
+        model = InstructBlipForConditionalGeneration.from_pretrained(model_path).cuda()
         processor = InstructBlipProcessor.from_pretrained(model_path)
         tokenizer = processor.tokenizer
+
+
+        # Make sure processor carries the model’s num_query_tokens
+        if getattr(processor, "num_query_tokens", None) is None:
+            processor.num_query_tokens = model.config.num_query_tokens  # important post-v4.46
 
         return model, tokenizer, processor
     
