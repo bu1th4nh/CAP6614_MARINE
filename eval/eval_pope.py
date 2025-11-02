@@ -99,6 +99,12 @@ def pope(args):
 
 if __name__ == "__main__":
     args = get_parser()
+
+    logging.info(f"Evaluation Directory: {args.eval_dir}")
+    logging.info(f"Label Directory: {args.label_dir}")
+    logging.info(f"Save Directory: {args.save_dir}")
+    
+
     os.makedirs(args.save_dir, exist_ok=True)
     args.save_file = os.path.join(args.save_dir, "pope_eval.jsonl")
 
