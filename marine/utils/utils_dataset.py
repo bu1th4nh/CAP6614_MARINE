@@ -125,6 +125,9 @@ def custom_collate_fn(batch: List[Tuple[
     # logging.fatal(f"Type of inputs_list[0]: {type(inputs_list[0])}")
 
 
+    logging.fatal(f"input keys: {list(inputs_list[0].keys())}")
+
+
     
     input_ids_list = [inp["input_ids"] for inp in inputs_list]
     image_tensors = [inp["pixel_values"].squeeze(0) for inp in inputs_list]
