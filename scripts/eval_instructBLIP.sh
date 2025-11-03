@@ -65,7 +65,7 @@ for BENCHMARK in "${benchmark_lst[@]}"; do
         #### POPE EVALUATION ####
         for QUESTION_FILE in "${QUESTION_FILE_ls[@]}"; do
 
-            echo "Evaluating $MODEL_VERSION using POPE evaluation with seed = $SEED, batch_size = $BATCH_SIZE"
+            echo "Evaluating $MODEL_VERSION using POPE evaluation with seed = $SEED, batch_size = $BATCH_SIZE, with eval dir = $OUTPUT_DIR"
 
             python ./eval/format.py \
                 --answer_dir $OUTPUT_DIR
