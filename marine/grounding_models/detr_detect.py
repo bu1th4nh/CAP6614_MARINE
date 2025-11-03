@@ -63,9 +63,13 @@ class ImageDataset(Dataset):
 
 
 def load_image_list(json_path: str) -> List[str]:
-    f = open(json_path, 'r')
-    data = [json.loads(line) for line in f]
-    f.close()
+    if 'coco_pope' in json_path:
+        f = open(json_path, 'r')
+        data = [json.loads(line) for line in f]
+        f.close()
+    elif 'coco_chair' in json_path:
+        with open(json_path, 'r') as f:
+            data = json.loads(f)
 
 
     images = set()
@@ -106,8 +110,11 @@ if __name__ == "__main__":
     parser.add_argument("--save_path", type=str, required=True)
     args = parser.parse_args()
 
+    logging.info(f"Loading configuration for metric: {args.metric}, dataset: {args.dataset}")
     question_path, image_dir = load_config(args.metric, args.dataset)
 
+
+    logging.info(f"Loading image list from: {question_path}")
     image_list = load_image_list(question_path)
 
     # logging.info(f"Image directory: {image_dir}")
