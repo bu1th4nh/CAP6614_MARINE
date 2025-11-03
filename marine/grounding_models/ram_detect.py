@@ -63,7 +63,7 @@ def load_image_list(json_path: str) -> List[str]:
         f.close()
     elif 'coco_chair' in json_path:
         with open(json_path, 'r') as f:
-            data = json.load(f)
+            data = json.loads(f.read())
 
 
     images = set()
