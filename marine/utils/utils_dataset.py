@@ -128,7 +128,6 @@ class Collator:
         # input_prompts = ["What's in this image?" for x in batch]
         # guidance_prompts = ["Describe this image in detail." for x in batch]
 
-
         
         inputs = self.processor(
             images=global_input_images, 
@@ -154,6 +153,24 @@ class Collator:
             "guidance_inputs": guidance_inputs
         }
     
+
+    def dict_collate_fn_with_process(self, batch: List[Mapping[str, Any]]):
+        # Prepare inputs
+        prompts = [x["cur_prompt"] for x in batch]
+        question_ids = [x["question_id"] for x in batch]
+        img_ids = [x["img_id"] for x in batch]
+        global_input_images = [x["image"].resize((224, 224)) for x in batch]
+        input_prompts = [x["full_prompt"].replace("<image>", "") for x in batch]
+        guidance_prompts = [x["full_prompt_neg"].replace("<image>", "") for x in batch]
+
+        return {
+            "cur_prompt": prompts,
+            "question_id": question_ids,
+            "img_id": img_ids,
+            "full_prompt": input_prompts,
+            "full_prompt_neg": guidance_prompts,
+            "image": global_input_images,
+        }
 
     def bypass_collate_fn(self, batch: List[Mapping[str, Any]]):
         return batch

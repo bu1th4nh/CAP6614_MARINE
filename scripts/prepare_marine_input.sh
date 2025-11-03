@@ -1,6 +1,6 @@
 #/bin/bash
 
-METRIC="pope" # chair, pope, qa90
+METRIC="chair" # chair, pope, qa90
 DATASET="coco" # coco, aokvqa, gqa, qa90
 
 THRESHOLD_DETR=0.95
