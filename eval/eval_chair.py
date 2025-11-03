@@ -548,11 +548,18 @@ def save_results(output, save_dir, cap_file):
 def print_metrics(hallucination_cap_dict):
     sentence_metrics = hallucination_cap_dict['overall_metrics']
 
+    report_n8n = f"""CHAIR Evaluation Results:"""
+
     for k, v in sentence_metrics.items():
         if k in ['CHAIRs', 'CHAIRi', 'Recall']:
             k_str = str(k).ljust(10)
             v_str = f'{v * 100:.01f}'  # + '%'
             logging.info(f"{k_str}: {v_str}")
+            report_n8n += f"\n- {k_str}: {v_str}"
+
+    report_message_to_n8n(report_n8n, msg_type="info")
+
+
 
 def save_file_check(args):
     file_name = "eval.json"

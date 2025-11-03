@@ -158,6 +158,16 @@ def pope(args):
     logging.info(f"{'Accuracy':<10}{'F1':<10}{'Yes_ratio':<10}")
     logging.info(f"{results['overall_metrics']['Accuracy']:<10}{results['overall_metrics']['F1']:<10}{results['overall_metrics']['Yes_ratio']:<10}")
 
+    report_message_to_n8n(
+f"""
+POPE Evaluation Results for {args.answer_file}:
+- Accuracy: {results['overall_metrics']['Accuracy']}
+- F1: {results['overall_metrics']['F1']}
+- Yes Ratio: {results['overall_metrics']['Yes_ratio']}
+""",
+        msg_type="info"
+    )
+
     save_results(args.save_file, results)
 
 

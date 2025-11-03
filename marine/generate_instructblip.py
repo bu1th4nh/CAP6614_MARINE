@@ -140,6 +140,8 @@ def eval_model(args):
     collator = Collator(processor, model.device)
     eval_dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, collate_fn=collator.dict_collate_fn_with_process)
 
+    report_message_to_n8n(f"Model loaded. Starting evaluation on {len(questions)} questions...", msg_type="info")
+
     # generate
     for data_batch in tqdm(eval_dataloader, desc="Evaluating", total=len(eval_dataloader)):
 
@@ -149,6 +151,8 @@ def eval_model(args):
         inputs = data_batch["inputs"]
         guidance_inputs = data_batch["guidance_inputs"]
 
+        max_length = inputs['input_ids'].shape[1] + args.max_new_tokens
+
         with torch.inference_mode():
             if args.guidance_strength == 0:
                 output_ids = model.generate(
@@ -156,7 +160,7 @@ def eval_model(args):
                     do_sample=False,
                     num_beams=1,
                     num_return_sequences=1,
-                    max_length=64,
+                    max_length=max_length,
                     min_length=1,
                     top_p=0.9,
                     repetition_penalty=1.5,
@@ -168,7 +172,7 @@ def eval_model(args):
                     **inputs,
                     do_sample=False,
                     num_beams=1,
-                    max_length=64,
+                    max_length=max_length,
                     min_length=1,
                     num_return_sequences=1,
                     top_p=0.9,
@@ -210,6 +214,7 @@ def eval_model(args):
     ans_file.close()
 
     put_file_to_s3(answers_file, f"s3://results/CAP6614_MARINE/answers/instructblip/{os.path.basename(answers_file)}")
+    report_message_to_n8n(f"InstructBLIP evaluation done! Answers saved to {answers_file}", msg_type="info")
     logging.info(f"Done! Saved answers to {answers_file}")
 
 
@@ -228,7 +233,7 @@ if __name__ == "__main__":
     
     parser.add_argument("--temperature", type=float, default=0.6)
     parser.add_argument("--top_p", type=float, default=0.9)
-    parser.add_argument("--max_new_tokens", type=int, default=64)
+    parser.add_argument("--max_new_tokens", type=int, default=128)
 
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--guidance_strength", type=float, default=0.7)
@@ -240,7 +245,7 @@ if __name__ == "__main__":
     set_seed(args.seed)
 
     try:
-        report_message_to_n8n(f"Starting InstructBLIP inference with guidance strength {args.guidance_strength} on questions from {args.question_file} to generate answers to {args.answers_file}.")
+        report_message_to_n8n(f"Starting InstructBLIP inference with guidance strength {args.guidance_strength} on questions from {args.question_file} to generate answers to {args.answer_path}.")
         eval_model(args)
     except Exception as e:
         logging.error(f"Error during run: {e}. Traceback: {traceback.format_exc()}")
@@ -254,6 +259,13 @@ if __name__ == "__main__":
             'traceback': traceback.format_exc()
         })
         logging.info(f"Error logged with id: {error_log_collection.inserted_id}")
-        report_message_to_n8n(f"Exception occurred during InstructBLIP evaluation: {e}. Traceback: `{traceback.format_exc()}`", msg_type="error")
+        report_message_to_n8n(
+f"""Exception occurred during InstructBLIP evaluation. TL;DR: 
+```{str(e)}```.
+Traceback: 
+```
+{traceback.format_exc()}
+```
+""", msg_type="error")
 
 
