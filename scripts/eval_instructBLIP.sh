@@ -47,6 +47,15 @@ guidance_strength_lst=(0.0 0.7)
 
 benchmark_lst=(chair pope)
 for BENCHMARK in "${benchmark_lst[@]}"; do
+    # Initialize QUESTION_FILE_ls based on BENCHMARK
+    if [ $BENCHMARK == "chair" ]; then
+        QUESTION_FILE_ls=(chair_coco_detr_th0.95_ram_th0.68.json)
+    elif [ $BENCHMARK == "pope" ]; then
+        QUESTION_FILE_ls=(pope_coco_detr_th0.95_ram_th0.68.json)
+    fi
+
+    OUTPUT_DIR=./output/${MODEL_NAME}/answers/answer_${TYPE}_${BENCHMARK}
+    
     #### EVALUATE ####
     if [ $BENCHMARK == "chair" ]; then
 
