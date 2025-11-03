@@ -165,7 +165,7 @@ def eval_model(args):
                     max_length=max_length,
                     min_length=1,
                     top_p=0.9,
-                    repetition_penalty=1.5,
+                    repetition_penalty=10,
                     length_penalty=1.0,
                     temperature=1,
                 )
@@ -178,7 +178,7 @@ def eval_model(args):
                     min_length=1,
                     num_return_sequences=1,
                     top_p=0.9,
-                    repetition_penalty=1.5,
+                    repetition_penalty=10,
                     length_penalty=1.0,
                     temperature=1,
                     logits_processor=LogitsProcessorList([
