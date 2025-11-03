@@ -51,7 +51,7 @@ for BENCHMARK in "${benchmark_lst[@]}"; do
     if [ $BENCHMARK == "chair" ]; then
 
         #### CHAIR EVALUATION ####
-        echo "Evaluating $MODEL_VERSION using CHAIR metrics with seed = $SEED, batch_size = $BATCH_SIZE"
+        echo "Evaluating $MODEL_VERSION using CHAIR metrics with seed = $SEED, batch_size = $BATCH_SIZE, with eval dir = $OUTPUT_DIR"
 
         python ./eval/format.py \
             --answer_dir $OUTPUT_DIR
