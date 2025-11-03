@@ -15,8 +15,11 @@ import pymongo
 # -----------------------------------------------------------------------------------------------
 # General Configurations
 # -----------------------------------------------------------------------------------------------
-from log_config import initialize_logging
+import mlflow
+import pymongo
 import requests
+from s3fs import S3FileSystem
+from log_config import initialize_logging
 initialize_logging()
 S3_ENDPOINT_URL       = os.environ["S3_ENDPOINT_URL"]
 S3_ACCESS_KEY_ID      = os.environ["S3_ACCESS_KEY_ID"]
@@ -30,7 +33,7 @@ N8N_WEBHOOK_ID        = os.environ["N8N_WEBHOOK_ID"]
 
 mongo = pymongo.MongoClient(
     host=MONGO_ENDPOINT,
-    port=MONGO_PORT,
+    port=int(MONGO_PORT),
     username=MONGO_USERNAME,
     password=MONGO_PASSWORD,
 )
@@ -46,6 +49,9 @@ storage_options = {
     'secret': S3_SECRET_ACCESS_KEY,
     'endpoint_url': S3_ENDPOINT_URL,
 }
+
+
+    
 
 
 def report_message_to_n8n(message: str, msg_type: str = "info"):
@@ -64,9 +70,16 @@ def report_message_to_n8n(message: str, msg_type: str = "info"):
 def put_file_to_s3(local_path: str, s3_path: str):
     try:
         s3.put(local_path, s3_path)
-        logging.info(f"Successfully uploaded {local_path} to {s3_path}.")
+        logging.info(f"Successfully uploaded `{local_path}` to `{s3_path}`.")
+        report_message_to_n8n(f"Successfully uploaded `{local_path}` to `{s3_path}`.")
     except Exception as e:
         logging.error(f"Failed to upload {local_path} to {s3_path}. Exception: {e}")
+        report_message_to_n8n(f"Failed ro uploaded `{local_path}` to `{s3_path}`.",msg_type="error")
+
+
+# if "test" in N8N_WEBHOOK_ID:
+#     logging.warning("Debug webhook detected.")
+#     report_message_to_n8n("Test!", msg_type="info")
 # -----------------------------------------------------------------------------------------------
 # -----------------------------------------------------------------------------------------------
 

@@ -84,11 +84,11 @@ def report_message_to_n8n(message: str, msg_type: str = "info"):
 def put_file_to_s3(local_path: str, s3_path: str):
     try:
         s3.put(local_path, s3_path)
-        logging.info(f"Successfully uploaded ```{local_path}``` to ```{s3_path}```.")
-        report_message_to_n8n(f"Successfully uploaded ```{local_path}``` to ```{s3_path}```.")
+        logging.info(f"Successfully uploaded `{local_path}` to `{s3_path}`.")
+        report_message_to_n8n(f"Successfully uploaded `{local_path}` to `{s3_path}`.")
     except Exception as e:
         logging.error(f"Failed to upload {local_path} to {s3_path}. Exception: {e}")
-        report_message_to_n8n(f"Failed ro uploaded ```{local_path}``` to ```{s3_path}```.",msg_type="error")
+        report_message_to_n8n(f"Failed ro uploaded `{local_path}` to `{s3_path}`.",msg_type="error")
 
 
 # if "test" in N8N_WEBHOOK_ID:

@@ -14,11 +14,10 @@ set +a
 
 
 guidance_strength_lst=(0.0 0.7)
-benchmark_lst=(chair pope)
+benchmark_lst=(chair)
 
 for BENCHMARK in "${benchmark_lst[@]}"; do
     # Initialize QUESTION_FILE_ls based on BENCHMARK
-    BENCHMARK=pope
     if [ $BENCHMARK == "chair" ]; then
         QUESTION_FILE_ls=(chair_coco_detr_th0.95_ram_th0.68.json)
     elif [ $BENCHMARK == "pope" ]; then
@@ -44,8 +43,10 @@ for BENCHMARK in "${benchmark_lst[@]}"; do
                 --max_new_tokens 64
         done
     done
+done
 
-
+benchmark_lst=(chair pope)
+for BENCHMARK in "${benchmark_lst[@]}"; do
     #### EVALUATE ####
     if [ $BENCHMARK == "chair" ]; then
 
