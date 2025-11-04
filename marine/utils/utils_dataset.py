@@ -1,4 +1,4 @@
-import os
+}import os
 import torch
 
 from torch.utils.data import Dataset
@@ -154,7 +154,7 @@ class Collator:
         }
     
 
-    def dict_collate_fn_with_process(self, batch: List[Mapping[str, Any]]):
+    def dict_collate_fn(self, batch: List[Mapping[str, Any]]):
         # Prepare inputs
         prompts = [x["cur_prompt"] for x in batch]
         question_ids = [x["question_id"] for x in batch]
