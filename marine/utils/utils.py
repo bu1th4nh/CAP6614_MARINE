@@ -33,9 +33,9 @@ def get_answers_file_name(args, model_name, pretrain_mm_mlp_adapter=None, vm_pre
         file_name += f'-{special_name}'
     
     if args.guidance_strength is not None:
-        answers_file = args.question_file.replace('.json', f'{file_name}-guidance_strength{args.guidance_strength}.jsonl')
+        answers_file = args.question_file.replace('.json', f'{file_name}-guidance_strength{args.guidance_strength}-rpt-penal10.jsonl')
     else:
-        answers_file = args.question_file.replace('.json', f'{file_name}-guidance_strength.jsonl')
+        answers_file = args.question_file.replace('.json', f'{file_name}-guidance_strength-rpt-penal10.jsonl')
     
     return answers_file
 
