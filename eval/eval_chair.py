@@ -603,7 +603,7 @@ def main():
     args = parser.parse_args()
 
 
-    report_message_to_n8n(f"Starting CHAIR evaluation for files in {args.eval_dir}.")
+    report_message_to_n8n(f"Starting CHAIR evaluation for files in `{args.eval_dir}`.")
 
     logging.info(f"Eval directory: {args.eval_dir}")
     logging.info(f"COCO annotation path: {args.coco_path}")
@@ -631,7 +631,7 @@ def main():
     else:
         eval_files = [args.cap_file]
 
-    for file in tqdm(eval_files, desc=f"Evaluating {len(eval_files)} files in {args.eval_dir}"):
+    for file in tqdm(eval_files, desc=f"Evaluating `{len(eval_files)}` files in `{args.eval_dir}`"):
         try:
             logging.info(f"Evaluating: {file}")
             results = evaluator.compute_chair(
@@ -643,7 +643,7 @@ def main():
             logging.error(f"Error evaluating file {file}: {e}", exc_info=True)
             continue
 
-    report_message_to_n8n(f"Completed CHAIR evaluation for files in {args.eval_dir}.")
+    report_message_to_n8n(f"Completed CHAIR evaluation for files in `{args.eval_dir}`.")
 
 if __name__ == '__main__':
     main()

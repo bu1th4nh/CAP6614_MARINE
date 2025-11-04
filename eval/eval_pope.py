@@ -173,7 +173,7 @@ def pope(args):
 
     report_message_to_n8n(
 f"""
-POPE Evaluation Results for {args.answer_file}:
+POPE Evaluation Results for `{args.answer_file}`:
 - Accuracy: {results['overall_metrics']['Accuracy']}
 - F1: {results['overall_metrics']['F1']}
 - Yes Ratio: {results['overall_metrics']['Yes_ratio']}
@@ -194,7 +194,7 @@ if __name__ == "__main__":
     logging.info(f"Save Directory: {args.save_dir}")
     
 
-    report_message_to_n8n(f"Starting POPE evaluation for files in {args.eval_dir}.")
+    report_message_to_n8n(f"Starting POPE evaluation for files in `{args.eval_dir}`.")
 
 
     os.makedirs(args.save_dir, exist_ok=True)
