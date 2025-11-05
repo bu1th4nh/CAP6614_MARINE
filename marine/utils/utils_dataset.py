@@ -105,10 +105,12 @@ class COCOEvalDataset(Dataset):
         
         # Sanitize prompts if needed
         elif self.custom_flavor == "instructblip":
+            cur_prompt = qs
             full_prompt = qs.replace("<image>", "")
             full_prompt_neg = qs_neg.replace("<image>", "")
 
         else:
+            cur_prompt = qs
             full_prompt = qs
             full_prompt_neg = qs_neg
 
