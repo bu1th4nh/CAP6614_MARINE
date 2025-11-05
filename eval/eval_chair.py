@@ -11,7 +11,8 @@ from collections import defaultdict
 import pymongo
 
 
-
+from dotenv import load_dotenv
+load_dotenv()
 # -----------------------------------------------------------------------------------------------
 # General Configurations
 # -----------------------------------------------------------------------------------------------

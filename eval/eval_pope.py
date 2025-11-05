@@ -12,7 +12,8 @@ from sklearn.metrics import confusion_matrix
 sys.path.append(os.getcwd())
 
 
-
+from dotenv import load_dotenv
+load_dotenv()
 # -----------------------------------------------------------------------------------------------
 # General Configurations
 # -----------------------------------------------------------------------------------------------

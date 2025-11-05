@@ -3,11 +3,11 @@ import os
 import sys
 import traceback
 sys.path.append(os.getcwd())
+
 from log_config import initialize_logging
-
 initialize_logging()
-from dotenv import load_dotenv
 
+from dotenv import load_dotenv
 load_dotenv()
 
 import argparse
