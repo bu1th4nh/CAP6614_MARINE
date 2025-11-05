@@ -188,11 +188,11 @@ class Collator:
 
         return {
             "prompts": prompts,
-            "question_id": question_ids,
-            "img_id": img_ids,
-            "full_prompt": input_prompts,
-            "full_prompt_neg": guidance_prompts,
-            "image": global_input_images,
+            "question_ids": question_ids,
+            "img_ids": img_ids,
+            "full_prompts": input_prompts,
+            "full_prompts_neg": guidance_prompts,
+            "global_input_images": global_input_images,
         }
 
     def bypass_collate_fn(self, batch: List[Mapping[str, Any]]):
