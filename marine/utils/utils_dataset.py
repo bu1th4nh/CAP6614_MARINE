@@ -63,13 +63,13 @@ class COCOEvalDataset(Dataset):
 
         
         # Add image tokens
-        image_token = DEFAULT_IMAGE_TOKEN
+        image_token = ""
         if self.mm_use_im_start_end:
             image_token = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN
 
-        prompt = image_token + "\n" + qs
-        guidance_prompt = image_token + "\n" + qs_neg
-        cur_prompt = "<image>\n" + qs
+        prompt = qs
+        guidance_prompt = qs_neg
+        cur_prompt = qs
 
         # Build conversation prompt
         conv = conv_templates[self.conv_mode].copy()
