@@ -558,10 +558,10 @@ def save_results(output, save_dir, cap_file):
     logging.info(f"== Saving results to {results_file} ==")
 
 
-def print_metrics(hallucination_cap_dict):
+def print_metrics(hallucination_cap_dict, ans_file=None):
     sentence_metrics = hallucination_cap_dict['overall_metrics']
 
-    report_n8n = f"""CHAIR Evaluation Results:"""
+    report_n8n = f"""CHAIR Evaluation Results for `{str(ans_file)}`:"""
 
     for k, v in sentence_metrics.items():
         if k in ['CHAIRs', 'CHAIRi', 'Recall']:
@@ -638,7 +638,7 @@ def main():
                 file, args.image_id_key, args.caption_key)
 
             save_results(results, args.save_path, file)
-            print_metrics(results)
+            print_metrics(results, file)
         except Exception as e:
             logging.error(f"Error evaluating file {file}: {e}", exc_info=True)
             continue
