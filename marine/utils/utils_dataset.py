@@ -24,7 +24,6 @@ import torch
 from PIL import Image
 from torch.utils.data import Dataset
 from torch.nn.utils.rnn import pad_sequence
-from llava.conversation import conv_templates
 from transformers import BatchEncoding
 
 from typing import Iterable, Mapping, Any, List, Tuple
@@ -78,8 +77,11 @@ class COCOEvalDataset(Dataset):
         qs = data["conversations"][0]["value"].replace("<image>", "").strip()
         qs_neg = data["conversations"][-1]["value"]
 
+
+        # Insert image tokens if needed
         if self.custom_flavor == "llava2":
             from llava.constants import DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
+            from llava.conversation import conv_templates 
 
             # Add image tokens
             image_token = DEFAULT_IMAGE_TOKEN
@@ -89,37 +91,29 @@ class COCOEvalDataset(Dataset):
             prompt = image_token + "\n" + qs
             guidance_prompt = image_token + "\n" + qs_neg
             cur_prompt = "<image>\n" + qs
+
+
+            conv = conv_templates[self.conv_mode].copy()
+            conv.append_message(conv.roles[0], prompt)
+            conv.append_message(conv.roles[1], None)
+            full_prompt = conv.get_prompt()
+
+            conv_neg = conv_templates[self.conv_mode].copy()
+            conv_neg.append_message(conv_neg.roles[0], guidance_prompt)
+            conv_neg.append_message(conv_neg.roles[1], None)
+            full_prompt_neg = conv_neg.get_prompt()
+        
+        # Sanitize prompts if needed
+        elif self.custom_flavor == "instructblip":
+            full_prompt = qs.replace("<image>", "")
+            full_prompt_neg = qs_neg.replace("<image>", "")
+
         else:
-            prompt = qs
-            guidance_prompt = qs_neg
-            cur_prompt = qs
+            full_prompt = qs
+            full_prompt_neg = qs_neg
 
-        # Build conversation prompt
-        conv = conv_templates[self.conv_mode].copy()
-        conv.append_message(conv.roles[0], prompt)
-        conv.append_message(conv.roles[1], None)
-        full_prompt = conv.get_prompt()
+            
 
-        conv_neg = conv_templates[self.conv_mode].copy()
-        conv_neg.append_message(conv_neg.roles[0], guidance_prompt)
-        conv_neg.append_message(conv_neg.roles[1], None)
-        full_prompt_neg = conv_neg.get_prompt()
-
-        # logging.fatal(f"Full prompt: {full_prompt}")
-        # logging.fatal(f"Full negative prompt: {full_prompt_neg}")
-
-        # Tokenize
-        # inputs = self.processor(text=full_prompt, images=image, return_tensors="pt", padding=True, truncation=False)
-        # guidance_inputs = self.processor(text=full_prompt_neg, images=image, return_tensors="pt", padding=True, truncation=False)
-
-    
-        # return (
-        #     cur_prompt,
-        #     question_id,
-        #     img_id,
-        #     inputs,
-        #     guidance_inputs
-        # )
     
         
         return {
@@ -144,9 +138,9 @@ class Collator:
         img_ids = [x["img_id"] for x in batch]
 
         # Prepare inputs
-        global_input_images = [x["image"].resize((224, 224)) for x in batch]
-        input_prompts = [x["full_prompt"].replace("<image>", "") for x in batch]
-        guidance_prompts = [x["full_prompt_neg"].replace("<image>", "") for x in batch]
+        global_input_images = [x["image"] for x in batch]
+        input_prompts = [x["full_prompt"] for x in batch]
+        guidance_prompts = [x["full_prompt_neg"] for x in batch]
 
         # input_prompts = ["What's in this image?" for x in batch]
         # guidance_prompts = ["Describe this image in detail." for x in batch]
@@ -175,16 +169,15 @@ class Collator:
             "inputs": inputs,
             "guidance_inputs": guidance_inputs
         }
-    
 
     def dict_collate_fn(self, batch: List[Mapping[str, Any]]):
         # Prepare inputs
         prompts = [x["cur_prompt"] for x in batch]
         question_ids = [x["question_id"] for x in batch]
         img_ids = [x["img_id"] for x in batch]
-        global_input_images = [x["image"].resize((224, 224)) for x in batch]
-        input_prompts = [x["full_prompt"].replace("<image>", "") for x in batch]
-        guidance_prompts = [x["full_prompt_neg"].replace("<image>", "") for x in batch]
+        global_input_images = [x["image"] for x in batch]
+        input_prompts = [x["full_prompt"] for x in batch]
+        guidance_prompts = [x["full_prompt_neg"] for x in batch]
 
         return {
             "prompts": prompts,
