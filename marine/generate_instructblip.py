@@ -6,7 +6,9 @@ sys.path.append(os.getcwd())
 from log_config import initialize_logging
 
 initialize_logging()
+from dotenv import load_dotenv
 
+load_dotenv()
 
 import argparse
 import torch
@@ -135,8 +137,8 @@ def eval_model(args):
         args.image_folder,
         processor, tokenizer, 
         args.conv_mode, 
-        getattr(model.config, 'mm_use_im_start_end', False)
-        custom_flavor='instructblip'
+        getattr(model.config, 'mm_use_im_start_end', False),
+        custom_flavor='instructblip',
     )
 
     collator = Collator(processor, model.device)
