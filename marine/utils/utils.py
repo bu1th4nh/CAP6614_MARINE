@@ -1,7 +1,7 @@
 import math
 
 
-def get_answers_file_name(args, model_name, pretrain_mm_mlp_adapter=None, vm_pretrain_mm_mlp_adapter=None):
+def get_answers_file_name(args, model_name, pretrain_mm_mlp_adapter=None, vm_pretrain_mm_mlp_adapter=None, special_name=None):
     if pretrain_mm_mlp_adapter is not None and vm_pretrain_mm_mlp_adapter is not None:
         #     --pretrain_mm_mlp_adapter "./llava/backbone/checkpoints_tune/llava-llama-2-7b-chat-DETR-pretrain-1000-tune-1/mm_projector.bin" \
         # special_name = "DETR-pretrain-1000-tune-1"
@@ -13,6 +13,8 @@ def get_answers_file_name(args, model_name, pretrain_mm_mlp_adapter=None, vm_pre
             special_name += f"-{vm_pretrain_mm_mlp_adapter.split('/')[-2].split('chat-')[-1]}"
         except:
             special_name += f"-{vm_pretrain_mm_mlp_adapter.split('/')[-2]}"
+    elif special_name is not None:
+        pass
     else:
         special_name = ""
 
@@ -33,9 +35,9 @@ def get_answers_file_name(args, model_name, pretrain_mm_mlp_adapter=None, vm_pre
         file_name += f'-{special_name}'
     
     if args.guidance_strength is not None:
-        answers_file = args.question_file.replace('.json', f'{file_name}-guidance_strength{args.guidance_strength}-no-image-token.jsonl')
+        answers_file = args.question_file.replace('.json', f'{file_name}-guidance_strength{args.guidance_strength}.jsonl')
     else:
-        answers_file = args.question_file.replace('.json', f'{file_name}-guidance_strength-no-image-token.jsonl')
+        answers_file = args.question_file.replace('.json', f'{file_name}-guidance_strength.jsonl')
     
     return answers_file
 

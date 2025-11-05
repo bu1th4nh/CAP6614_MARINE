@@ -2,9 +2,10 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DATA_DIR="$ROOT_DIR/Data/vqa_v2"
+DATA_DIR="$ROOT_DIR/data/vqa_v2"
+COCO_DIR="$ROOT_DIR/data/coco"
 
-mkdir -p "$DATA_DIR"
+mkdir -p "$DATA_DIR" "$COCO_DIR"
 
 # COCO val images
 cd "$COCO_DIR"
