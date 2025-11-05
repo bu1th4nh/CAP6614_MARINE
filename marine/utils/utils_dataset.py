@@ -187,7 +187,7 @@ class Collator:
         guidance_prompts = [x["full_prompt_neg"].replace("<image>", "") for x in batch]
 
         return {
-            "cur_prompt": prompts,
+            "prompts": prompts,
             "question_id": question_ids,
             "img_id": img_ids,
             "full_prompt": input_prompts,
