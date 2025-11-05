@@ -1,22 +1,16 @@
 #!/usr/bin/env bash
 export PYTHONPATH=$PYTHONPATH:/home/ti514716/Pretrained/llava2
 
-MODEL_NAME="llava2"
-MODEL_VERSION="llava-hf/llava-1.5-7b-hf"
+MODEL_NAME="instructblip"
+MODEL_VERSION="Salesforce/instructblip-vicuna-7b"
+guidance_strength_lst=(0.0 0.7)
 BATCH_SIZE=24
+TYPE=repro
 SEED=242
 
-guidance_strength_lst=(0.0 0.7)
-TYPE=repro
-
-BENCHMARK=chair
-if [ $BENCHMARK == "chair" ]; then
-    QUESTION_FILE_ls=(chair_coco_detr_th0.95_ram_th0.68.json)
-elif [ $BENCHMARK == "pope" ]; then
-    QUESTION_FILE_ls=(pope_coco_detr_th0.95_ram_th0.68.json)
-fi
-
-OUTPUT_DIR=./output/${MODEL_NAME}/answers/answer_${TYPE}_${BENCHMARK}
+set -a
+source ./.env
+set +a
 
 benchmark_lst=(chair pope)
 for BENCHMARK in "${benchmark_lst[@]}"; do
