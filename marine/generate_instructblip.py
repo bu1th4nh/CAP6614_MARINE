@@ -136,25 +136,45 @@ def eval_model(args):
         processor, tokenizer, 
         args.conv_mode, 
         getattr(model.config, 'mm_use_im_start_end', False)
-        # custom_flavor='instructblip'
+        custom_flavor='instructblip'
     )
 
     collator = Collator(processor, model.device)
-    eval_dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, collate_fn=collator.dict_collate_fn_with_process)
+    eval_dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, collate_fn=collator.dict_collate_fn)
 
     report_message_to_n8n(f"Model loaded. Starting evaluation on {len(questions)} questions...", msg_type="info")
 
     # generate
+    sample_out = (None, None)
     for data_batch in tqdm(eval_dataloader, desc="Evaluating", total=len(eval_dataloader)):
+        # -----------------------------------------------------------------------------------------------
+        # Data preparation
+        # -----------------------------------------------------------------------------------------------
+        prompts = data_batch['prompts']
+        question_ids = data_batch['question_ids']
+        img_ids = data_batch['img_ids']
+        full_prompts = data_batch['full_prompts']
+        guidance_prompts = data_batch['full_prompts_neg']
+        global_input_images = data_batch['global_input_images']
 
-        prompts = data_batch["prompts"]
-        img_ids = data_batch["img_ids"]
-        question_ids = data_batch["question_ids"]
-        inputs = data_batch["inputs"]
-        guidance_inputs = data_batch["guidance_inputs"]
+        inputs = processor(
+            images = global_input_images,
+            text = full_prompts,
+            return_tensors="pt",
+            padding=True,
+        ).to(model.device)
+        guidance_inputs = processor(
+            images = global_input_images,
+            text = guidance_prompts,
+            return_tensors="pt",
+            padding=True,
+        ).to(model.device)
 
+
+        # -----------------------------------------------------------------------------------------------
+        # Inference
+        # -----------------------------------------------------------------------------------------------
         max_length = inputs['input_ids'].shape[1] + args.max_new_tokens
-
         with torch.inference_mode():
             if args.guidance_strength == 0:
                 output_ids = model.generate(
@@ -190,10 +210,11 @@ def eval_model(args):
                         ),
                     ])
                 )
-
         input_token_len = inputs["input_ids"].shape[1]
 
+        # -----------------------------------------------------------------------------------------------
         # Batch decode the outputs
+        # -----------------------------------------------------------------------------------------------
         decoded_outputs = tokenizer.batch_decode(
             output_ids[:, input_token_len:], skip_special_tokens=True)
 
@@ -211,12 +232,18 @@ def eval_model(args):
                                        "answer_id": ans_id,
                                        "model_id": model_name,
                                        "metadata": {}}) + "\n")
-
+            
+            sample_out = (question_ids[i], {output})
         ans_file.flush()
+
     ans_file.close()
 
+
+
     put_file_to_s3(answers_file, f"s3://results/CAP6614_MARINE/answers/instructblip/{os.path.basename(answers_file)}")
-    report_message_to_n8n(f"InstructBLIP evaluation done! Answers saved to {answers_file}", msg_type="info")
+
+    report_message_to_n8n(f"Sample output: `{sample_out[0]}` -> `{sample_out[1]}`", msg_type="info")
+    report_message_to_n8n(f"InstructBLIP evaluation done! Answers saved to `{answers_file}`", msg_type="info")
     logging.info(f"Done! Saved answers to {answers_file}")
 
 
@@ -258,7 +285,8 @@ if __name__ == "__main__":
             'question_file': args.question_file,
             'answers_file': args.answers_file,
             'error': str(e),
-            'traceback': traceback.format_exc()
+            'traceback': traceback.format_exc(),
+            'model_name': get_model_name_from_path(args.model_path),
         })
         logging.info(f"Error logged with id: {error_log_collection.inserted_id}")
         report_message_to_n8n(

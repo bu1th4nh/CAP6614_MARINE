@@ -1,5 +1,7 @@
+from datetime import datetime
 import os
 import sys
+import traceback
 sys.path.append(os.getcwd())
 from log_config import initialize_logging
 
@@ -11,7 +13,7 @@ import torch
 import os
 import json
 import shortuuid
-
+from tqdm import tqdm
 
 from torch.utils.data import DataLoader
 from transformers import LogitsProcessorList
@@ -19,13 +21,86 @@ from transformers import LogitsProcessorList
 import logging
 
 from marine.utils.utils import get_chunk, get_answers_file_name, get_model_name_from_path
-from marine.utils.utils_dataset import COCOEvalDataset, custom_collate_fn
+from marine.utils.utils_dataset import *
 from marine.utils.utils_guidance import GuidanceLogits
 from marine.utils.utils_model import load_model
 
 
-def eval_model(args):
+# -----------------------------------------------------------------------------------------------
+# General Configurations
+# -----------------------------------------------------------------------------------------------
+import mlflow
+import pymongo
+import requests
+from s3fs import S3FileSystem
+from log_config import initialize_logging
+initialize_logging()
+S3_ENDPOINT_URL       = os.environ["S3_ENDPOINT_URL"]
+S3_ACCESS_KEY_ID      = os.environ["S3_ACCESS_KEY_ID"]
+S3_SECRET_ACCESS_KEY  = os.environ["S3_SECRET_ACCESS_KEY"]
+MONGO_ENDPOINT        = os.environ["MONGO_ENDPOINT"]
+MONGO_PORT            = os.environ["MONGO_PORT"]
+MONGO_USERNAME        = os.environ["MONGO_USERNAME"]
+MONGO_PASSWORD        = os.environ["MONGO_PASSWORD"]
+N8N_ENDPOINT_URL      = os.environ["N8N_ENDPOINT_URL"]
+N8N_WEBHOOK_ID        = os.environ["N8N_WEBHOOK_ID"]
 
+mongo = pymongo.MongoClient(
+    host=MONGO_ENDPOINT,
+    port=int(MONGO_PORT),
+    username=MONGO_USERNAME,
+    password=MONGO_PASSWORD,
+)
+s3 = S3FileSystem(
+    anon=False, 
+    endpoint_url=S3_ENDPOINT_URL,
+    key=S3_ACCESS_KEY_ID,
+    secret=S3_SECRET_ACCESS_KEY,
+    use_ssl=False
+)
+storage_options = {
+    'key': S3_ACCESS_KEY_ID,
+    'secret': S3_SECRET_ACCESS_KEY,
+    'endpoint_url': S3_ENDPOINT_URL,
+}
+
+
+    
+
+
+def report_message_to_n8n(message: str, msg_type: str = "info"):
+    try:
+        response = requests.post(
+            f"{N8N_ENDPOINT_URL}/{N8N_WEBHOOK_ID}",
+            json={"message": message, "type": msg_type}
+        )
+        if response.status_code == 200:
+            logging.info("Successfully reported message to n8n.")
+        else:
+            logging.error(f"Failed to report message to n8n. Status code: {response.status_code}")
+    except Exception as e:
+        logging.error(f"Exception occurred while reporting message to n8n: {e}")
+
+def put_file_to_s3(local_path: str, s3_path: str):
+    try:
+        s3.put(local_path, s3_path)
+        logging.info(f"Successfully uploaded `{local_path}` to `{s3_path}`.")
+        report_message_to_n8n(f"Successfully uploaded `{local_path}` to `{s3_path}`.")
+    except Exception as e:
+        logging.error(f"Failed to upload {local_path} to {s3_path}. Exception: {e}")
+        report_message_to_n8n(f"Failed ro uploaded `{local_path}` to `{s3_path}`.",msg_type="error")
+
+
+# if "test" in N8N_WEBHOOK_ID:
+#     logging.warning("Debug webhook detected.")
+#     report_message_to_n8n("Test!", msg_type="info")
+# -----------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------
+
+
+
+
+def eval_model(args):
     logging.info(f"Evaluating model: {str(args.model_path)}")
     logging.info(f"Loading questions from {str(args.question_path)} and {str(args.question_file)}...")
     logging.info(f"Loading images from {str(args.image_folder)}...")
@@ -35,11 +110,12 @@ def eval_model(args):
     logging.info(f"Using seed: {args.seed}, guidance_strength: {args.guidance_strength}, batch_size: {args.batch_size}, sampling: {args.sampling}")
 
 
-
+    print()
+    print()
+    logging.info("==============================================================================================================================")
     # Model
     model_path = args.model_path
     model_name = get_model_name_from_path(model_path)
-    
     model, tokenizer, processor = load_model(model_name, model_path)
 
     # QA Data
@@ -55,28 +131,52 @@ def eval_model(args):
     os.makedirs(os.path.dirname(answers_file), exist_ok=True)
     ans_file = open(answers_file, "w")
 
-    dataset = COCOEvalDataset(questions, args.image_folder, processor, tokenizer, args.conv_mode, getattr(model.config, 'mm_use_im_start_end', False))
-    eval_dataloader = DataLoader(
-        dataset, batch_size=args.batch_size, shuffle=False, collate_fn=custom_collate_fn)
+    dataset = COCOEvalDataset(
+        questions, 
+        args.image_folder,
+        processor, tokenizer, 
+        args.conv_mode, 
+        getattr(model.config, 'mm_use_im_start_end', False),
+        custom_flavor='llava2'
+    )
+
+    collator = Collator(processor, model.device)
+    eval_dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, collate_fn=collator.dict_collate_fn)
+
+    report_message_to_n8n(f"Model loaded. Starting evaluation on {len(questions)} questions...", msg_type="info")
 
     # generate
-    for (
-        prompts, 
-        question_ids, 
-        img_ids, 
-        input_ids, 
-        guidance_ids, 
-        images, 
-        guidance_images, 
-        attention_masks, 
-        guidance_attention_masks
-    ) in eval_dataloader:
-        
+    sample_out = (None, None)
+    for data_batch in tqdm(eval_dataloader, desc="Evaluating", total=len(eval_dataloader)):
+        # -----------------------------------------------------------------------------------------------
+        # Data preparation
+        # -----------------------------------------------------------------------------------------------
+        prompts = data_batch['prompts']
+        question_ids = data_batch['question_ids']
+        img_ids = data_batch['img_ids']
+        full_prompts = data_batch['full_prompts']
+        guidance_prompts = data_batch['full_prompts_neg']
+        global_input_images = data_batch['global_input_images']
+
+        inputs = processor(
+            images = global_input_images,
+            text = full_prompts,
+            return_tensors="pt",
+            padding=True,
+        ).to(model.device)
+        guidance_inputs = processor(
+            images = global_input_images,
+            text = guidance_prompts,
+            return_tensors="pt",
+            padding=True,
+        ).to(model.device)
+
+
+
         with torch.inference_mode():
             if args.guidance_strength == 0:
                 output_ids = model.generate(
-                    input_ids,
-                    pixel_values=images,
+                    **inputs,
                     do_sample=args.sampling,
                     temperature=args.temperature,
                     top_p=args.top_p,
@@ -85,26 +185,25 @@ def eval_model(args):
                 )
             else:
                 output_ids = model.generate(
-                    input_ids,
-                    pixel_values=images,
+                    **inputs,
                     do_sample=args.sampling,
                     temperature=args.temperature,
                     top_p=args.top_p,
                     max_new_tokens=args.max_new_tokens,
                     use_cache=True,
                     logits_processor=LogitsProcessorList([
-                        GuidanceLogits(guidance_strength=args.guidance_strength,
-                                  guidance=guidance_ids,
-                                  images=guidance_images,
-                                  attention_mask=guidance_attention_masks,
-                                  model=model,
-                                  tokenizer=tokenizer),
+                        GuidanceLogits(
+                            guidance_strength=args.guidance_strength,
+                            guidance_inputs=guidance_inputs,
+                            model=model,
+                            tokenizer=tokenizer),
                     ])
                 )
+        input_token_len = inputs["input_ids"].shape[1]
 
-        input_token_len = input_ids.shape[1]
-
+        # -----------------------------------------------------------------------------------------------
         # Batch decode the outputs
+        # -----------------------------------------------------------------------------------------------
         decoded_outputs = tokenizer.batch_decode(
             output_ids[:, input_token_len:], skip_special_tokens=True)
 
@@ -160,4 +259,30 @@ if __name__ == "__main__":
     from transformers import set_seed
     set_seed(args.seed)
 
-    eval_model(args)
+    
+    try:
+        report_message_to_n8n(f"Starting LLaVa 2 inference with guidance strength {args.guidance_strength} on questions from ```{args.question_file}``` to generate answers to ```{args.answer_path}```.")
+        eval_model(args)
+    except Exception as e:
+        logging.error(f"Error during run: {e}. Traceback: {traceback.format_exc()}")
+
+        error_log_collection = mongo['LOGS']['CAP6614_MARINE'].insert_one({
+            'timestamp': datetime.now(),
+            'model_path': args.model_path,
+            'question_file': args.question_file,
+            'answers_file': args.answers_file,
+            'error': str(e),
+            'traceback': traceback.format_exc(),
+            'model_name': get_model_name_from_path(args.model_path),
+        })
+        logging.info(f"Error logged with id: {error_log_collection.inserted_id}")
+        report_message_to_n8n(
+f"""Exception occurred during LLaVa 2 evaluation. TL;DR: 
+```{str(e)}```.
+Traceback: 
+```
+{traceback.format_exc()}
+```
+""", msg_type="error")
+
+

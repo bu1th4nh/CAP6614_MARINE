@@ -1,15 +1,32 @@
+# /*==========================================================================================*\
+# **                        _           _ _   _     _  _         _                            **
+# **                       | |__  _   _/ | |_| |__ | || |  _ __ | |__                         **
+# **                       | '_ \| | | | | __| '_ \| || |_| '_ \| '_ \                        **
+# **                       | |_) | |_| | | |_| | | |__   _| | | | | | |                       **
+# **                       |_.__/ \__,_|_|\__|_| |_|  |_| |_| |_|_| |_|                       **
+# \*==========================================================================================*/
+
+
+# -----------------------------------------------------------------------------------------------
+# Original Author: Linxi Zhao, Yihe Deng, Weitong Zhang, and Quanquan Gu
+# Modified: Bùi Tiến Thành - Tien-Thanh Bui (@bu1th4nh)
+# Title: utils_dataset.py
+# Date: 2025/11/05 11:52:48
+# Description: Upgraded dataset utilities for COCO-style evaluation of LVLMs with enhanced compatibility.
+# 
+# Written with dedication at the University of Central Florida, EPCOT, and the Magic Kingdom.
+# -----------------------------------------------------------------------------------------------
+
+
 import os
 import torch
 
+from PIL import Image
 from torch.utils.data import Dataset
 from torch.nn.utils.rnn import pad_sequence
-from copy import deepcopy
-from PIL import Image
-import logging
-
-from llava.constants import DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
 from llava.conversation import conv_templates
 from transformers import BatchEncoding
+
 from typing import Iterable, Mapping, Any, List, Tuple
 
 try:
@@ -61,15 +78,21 @@ class COCOEvalDataset(Dataset):
         qs = data["conversations"][0]["value"].replace("<image>", "").strip()
         qs_neg = data["conversations"][-1]["value"]
 
-        
-        # Add image tokens
-        image_token = ""
-        if self.mm_use_im_start_end:
-            image_token = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN
+        if self.custom_flavor == "llava2":
+            from llava.constants import DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
 
-        prompt = qs
-        guidance_prompt = qs_neg
-        cur_prompt = qs
+            # Add image tokens
+            image_token = DEFAULT_IMAGE_TOKEN
+            if self.mm_use_im_start_end:
+                image_token = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN
+
+            prompt = image_token + "\n" + qs
+            guidance_prompt = image_token + "\n" + qs_neg
+            cur_prompt = "<image>\n" + qs
+        else:
+            prompt = qs
+            guidance_prompt = qs_neg
+            cur_prompt = qs
 
         # Build conversation prompt
         conv = conv_templates[self.conv_mode].copy()
