@@ -59,6 +59,8 @@ import requests
 from s3fs import S3FileSystem
 from log_config import initialize_logging
 initialize_logging()
+
+logging.info("Initializing S3 and MongoDB connections...")
 S3_ENDPOINT_URL       = os.environ["S3_ENDPOINT_URL"]
 S3_ACCESS_KEY_ID      = os.environ["S3_ACCESS_KEY_ID"]
 S3_SECRET_ACCESS_KEY  = os.environ["S3_SECRET_ACCESS_KEY"]
