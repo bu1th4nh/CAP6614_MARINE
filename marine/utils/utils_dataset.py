@@ -102,6 +102,18 @@ class COCOEvalDataset(Dataset):
             conv_neg.append_message(conv_neg.roles[0], guidance_prompt)
             conv_neg.append_message(conv_neg.roles[1], None)
             full_prompt_neg = conv_neg.get_prompt()
+            
+        elif self.custom_flavor == "mplug":
+            cur_prompt = qs
+            full_prompt = [{
+                "role": "user",
+                "content": f"<|image|>\n{qs}"
+            }, {"role": "assistant", "content": ""}]
+            full_prompt_neg = [{
+                "role": "user",
+                "content": f"<|image|>\n{qs_neg}"
+            }, {"role": "assistant", "content": ""}]
+
         
         # Sanitize prompts if needed
         elif self.custom_flavor == "instructblip":
