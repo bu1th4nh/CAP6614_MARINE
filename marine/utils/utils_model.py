@@ -42,7 +42,7 @@ def load_model(model_name: str, model_path: str):
     
 
     elif model_name == "mplug-owl3":
-        from transformers import AutoModel, AutoTokenizer
+        from modelscope import AutoModel, AutoTokenizer
 
         model = AutoModel.from_pretrained(model_path, attn_implementation='sdpa', torch_dtype=torch.half)
         tokenizer = AutoTokenizer.from_pretrained(model_path)
